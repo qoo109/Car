@@ -1,95 +1,169 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Neon Racer Stable Mobile</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Neon Racer V10 Safe</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#02040a;color:white;font-family:Arial,"Microsoft JhengHei",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
-canvas{position:fixed;inset:0;width:100vw;height:100vh;display:block;background:#02040a}
-#start{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle,rgba(0,234,255,.18),rgba(0,0,0,.92)),#02040a}
-#start h1{margin:0;color:#00eaff;font-size:clamp(38px,8vw,78px);letter-spacing:3px;text-shadow:0 0 28px #00eaff}
-#start p{line-height:1.6;color:#dffcff;padding:0 22px;max-width:600px}
-#startBtn{border:0;border-radius:999px;padding:16px 38px;background:#00eaff;color:#001018;font-size:22px;font-weight:900;box-shadow:0 0 26px #00eaff}
-#hud{position:fixed;top:max(8px,env(safe-area-inset-top));left:max(8px,env(safe-area-inset-left));z-index:5;min-width:150px;padding:8px 10px;background:rgba(0,0,0,.48);border:1px solid rgba(0,234,255,.68);border-radius:13px;box-shadow:0 0 18px rgba(0,234,255,.3);font-size:12px;line-height:1.45}
+html,body{
+  margin:0;width:100%;height:100%;overflow:hidden;background:#02040a;color:#fff;
+  font-family:Arial,"Microsoft JhengHei",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none
+}
+canvas{position:fixed;inset:0;width:100vw;height:100vh;background:#02040a;display:block}
+#start{
+  position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  background:radial-gradient(circle,rgba(0,234,255,.18),rgba(0,0,0,.94)),#02040a
+}
+#start h1{margin:0;color:#00eaff;font-size:clamp(36px,9vw,82px);letter-spacing:3px;text-shadow:0 0 28px #00eaff}
+#start h2{margin:10px 0 0;color:#fff;font-size:clamp(18px,4vw,32px)}
+#start p{color:#dffcff;line-height:1.55;max-width:680px;padding:0 24px}
+.mainBtn{
+  border:0;border-radius:999px;padding:15px 32px;background:#00eaff;color:#001018;
+  font-size:20px;font-weight:900;box-shadow:0 0 26px #00eaff;margin:6px
+}
+.secondaryBtn{
+  border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:13px 26px;background:rgba(0,0,0,.28);color:#eaffff;
+  font-size:15px;font-weight:900;box-shadow:0 0 18px rgba(0,234,255,.24);margin:6px
+}
+#status{font-size:13px;color:rgba(255,255,255,.7);min-height:20px;margin-top:6px}
+#hud{
+  position:fixed;top:max(8px,env(safe-area-inset-top));left:max(8px,env(safe-area-inset-left));z-index:10;
+  min-width:150px;padding:8px 10px;border-radius:13px;background:rgba(0,0,0,.5);
+  border:1px solid rgba(0,234,255,.68);box-shadow:0 0 18px rgba(0,234,255,.3);
+  font-size:12px;line-height:1.42
+}
 .logo{color:#00eaff;font-weight:900}
-#leader{position:fixed;top:max(8px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));z-index:5;width:132px;padding:8px;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.22);border-radius:13px;font-size:10px;line-height:1.35}
-.row{display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08);gap:6px}
-.me{color:#00eaff}
 #nitroBox{height:10px;margin-top:6px;border:1px solid #00eaff;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.08)}
 #nitro{height:100%;width:100%;background:linear-gradient(90deg,#00eaff,#7a5cff,#ff3ee8)}
-#controls{position:fixed;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));z-index:10;display:flex;justify-content:space-between;align-items:flex-end;padding:0 18px;pointer-events:none}
-#steer{width:118px;height:118px;border-radius:50%;border:1px solid rgba(0,234,255,.75);background:radial-gradient(circle,rgba(0,234,255,.14),rgba(0,0,0,.48));box-shadow:0 0 20px rgba(0,234,255,.34);position:relative;pointer-events:auto}
-#knob{position:absolute;left:50%;top:50%;width:50px;height:50px;margin-left:-25px;margin-top:-25px;border-radius:50%;background:rgba(0,234,255,.28);border:1px solid rgba(255,255,255,.55);box-shadow:0 0 18px rgba(0,234,255,.55)}
-#steer span{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:10px;color:rgba(255,255,255,.55)}
-.right{display:grid;grid-template-columns:58px 78px;grid-template-rows:56px 82px;gap:8px;pointer-events:auto}
-.btn{border-radius:50%;border:1px solid rgba(0,234,255,.85);background:rgba(0,12,24,.58);color:#eaffff;font-size:11px;font-weight:900;box-shadow:0 0 16px rgba(0,234,255,.32)}
+#leader{
+  position:fixed;top:max(8px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));z-index:10;
+  width:132px;padding:8px;border-radius:13px;background:rgba(0,0,0,.42);
+  border:1px solid rgba(255,255,255,.22);font-size:10px;line-height:1.32
+}
+.row{display:flex;justify-content:space-between;gap:6px;border-bottom:1px solid rgba(255,255,255,.08);padding:1px 0}
+.me{color:#00eaff;text-shadow:0 0 8px #00eaff}
+#controls{
+  position:fixed;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));z-index:20;
+  display:flex;justify-content:space-between;align-items:flex-end;padding:0 18px;pointer-events:none
+}
+#wheel{
+  width:124px;height:124px;border-radius:50%;position:relative;pointer-events:auto;
+  border:1px solid rgba(0,234,255,.75);
+  background:radial-gradient(circle,rgba(0,234,255,.16),rgba(0,0,0,.48));
+  box-shadow:0 0 22px rgba(0,234,255,.34),inset 0 0 18px rgba(0,234,255,.13);
+  -webkit-tap-highlight-color:transparent
+}
+#knob{
+  position:absolute;left:50%;top:50%;width:52px;height:52px;margin-left:-26px;margin-top:-26px;border-radius:50%;
+  background:rgba(0,234,255,.28);border:1px solid rgba(255,255,255,.55);box-shadow:0 0 18px rgba(0,234,255,.55)
+}
+#wheel span{position:absolute;left:0;right:0;bottom:13px;text-align:center;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.55)}
+.rightControls{display:grid;grid-template-columns:58px 78px;grid-template-rows:56px 82px;gap:8px;pointer-events:auto}
+.btn{
+  border-radius:50%;border:1px solid rgba(0,234,255,.85);background:rgba(0,12,24,.58);color:#eaffff;
+  font-weight:900;font-size:11px;box-shadow:0 0 16px rgba(0,234,255,.32),inset 0 0 14px rgba(0,234,255,.12);
+  -webkit-tap-highlight-color:transparent
+}
 .btn.active,.btn:active{transform:scale(.94);background:rgba(0,234,255,.28)}
 #brake{width:56px;height:56px}
-#drift,#boost{width:64px;height:64px}
+#drift,#nitroBtn{width:64px;height:64px}
 #gas{width:80px;height:80px;border-color:rgba(0,255,170,.9);box-shadow:0 0 16px rgba(0,255,170,.32)}
-#boost{border-color:rgba(255,62,232,.9);box-shadow:0 0 16px rgba(255,62,232,.32)}
+#nitroBtn{border-color:rgba(255,62,232,.9);box-shadow:0 0 16px rgba(255,62,232,.32)}
 #drift{border-color:rgba(255,196,0,.9);box-shadow:0 0 16px rgba(255,196,0,.28)}
-@media(orientation:portrait) and (max-width:900px){#start:after{content:"建議手機橫向遊玩";position:absolute;bottom:22px;color:rgba(255,255,255,.72);font-size:13px}}
+#featurePanel{
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:40;display:none;
+  width:min(92vw,620px);max-height:78vh;overflow:auto;padding:18px;background:rgba(0,0,0,.78);
+  border:1px solid rgba(0,234,255,.55);border-radius:18px;box-shadow:0 0 28px rgba(0,234,255,.28)
+}
+#featurePanel h3{margin:0 0 8px;color:#00eaff}
+#featurePanel ul{margin:6px 0 12px;padding-left:20px}
+#closePanel{float:right}
+@media(orientation:portrait) and (max-width:900px){
+  #start:after{content:"建議橫向遊玩，畫面和操作會比較好";position:absolute;bottom:20px;color:rgba(255,255,255,.72);font-size:13px}
+}
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
 
 <div id="hud">
-  <div class="logo">STABLE 單檔版</div>
+  <div class="logo">V10 SAFE</div>
+  <div>模式：<span id="modeText">V6～V9 穩定</span></div>
   <div>圈數：<span id="lap">1</span>/3</div>
   <div>排名：<span id="rank">1</span>/6</div>
-  <div>速度：<span id="speed">0</span></div>
+  <div>速度：<span id="speed">0</span> km/h</div>
   <div>漂移：<span id="score">0</span></div>
+  <div>AI：<span id="ai">待機</span></div>
   <div id="nitroBox"><div id="nitro"></div></div>
 </div>
 
 <div id="leader"></div>
 
 <div id="controls">
-  <div id="steer"><div id="knob"></div><span>STEER</span></div>
-  <div class="right">
+  <div id="wheel"><div id="knob"></div><span>STEER</span></div>
+  <div class="rightControls">
     <button class="btn" id="brake">BRAKE</button>
     <button class="btn" id="drift">DRIFT</button>
-    <button class="btn" id="boost">NITRO</button>
+    <button class="btn" id="nitroBtn">NITRO</button>
     <button class="btn" id="gas">GAS</button>
   </div>
 </div>
 
+<div id="featurePanel">
+  <button id="closePanel" class="secondaryBtn">關閉</button>
+  <h3>目前整合內容</h3>
+  <b>V6 手機操控 2.0</b>
+  <ul><li>左下虛擬方向盤</li><li>右下 GAS / BRAKE / NITRO / DRIFT</li><li>支援多指操作</li></ul>
+  <b>V7 真實漂移與物理</b>
+  <ul><li>速度向量</li><li>側滑</li><li>抓地力</li><li>漂移煙霧</li><li>胎痕</li><li>漂移分數</li></ul>
+  <b>V8 高品質賽道</b>
+  <ul><li>柏油材質</li><li>紅白路肩</li><li>護欄</li><li>彎道箭頭</li><li>路燈</li><li>樹木、岩石、山景、城市背景</li></ul>
+  <b>V9 AI 車手戰術</b>
+  <ul><li>AI Tiger 攻擊</li><li>AI Turtle 保守</li><li>AI Eagle 抓線</li><li>AI Fox 假動作</li><li>AI Bull 硬擠</li></ul>
+  <b>V10 Rapier 安全模式</b>
+  <ul><li>此單檔版保留 Rapier 入口與檢查機制</li><li>手機載入外部物理引擎失敗時，不會卡住主遊戲</li><li>真正 Rapier 版本建議之後分成專案版上傳，不建議塞在首頁</li></ul>
+</div>
+
 <div id="start">
   <h1>NEON RACER</h1>
-  <p>STABLE 單檔可玩版。沒有 Three.js、沒有 Rapier、沒有 GLTF、沒有 assets 資料夾。只要這一個 index.html 就能跑。</p>
-  <button id="startBtn">開始比賽</button>
-  <p style="font-size:13px;color:rgba(255,255,255,.7)">手機：左下方向盤，右下油門 / 煞車 / 氮氣 / 漂移</p>
+  <h2>V10 SAFE INTEGRATION</h2>
+  <p>穩定首頁：先保證手機可以玩。主模式已整合 V6～V9。V10 Rapier 入口會先檢查環境，不會再讓遊戲卡死。</p>
+  <div>
+    <button class="mainBtn" id="startBtn">開始比賽</button>
+    <button class="secondaryBtn" id="featureBtn">查看功能</button>
+    <button class="secondaryBtn" id="rapierBtn">檢查 V10 Rapier</button>
+  </div>
+  <div id="status">建議先按「開始比賽」測試穩定版</div>
 </div>
 
 <script>
 (()=>{
 const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
-const start=document.getElementById("start"),startBtn=document.getElementById("startBtn");
-const lapEl=document.getElementById("lap"),rankEl=document.getElementById("rank"),speedEl=document.getElementById("speed"),scoreEl=document.getElementById("score"),nitroEl=document.getElementById("nitro"),leader=document.getElementById("leader");
-const steer=document.getElementById("steer"),knob=document.getElementById("knob");
-const gas=document.getElementById("gas"),brake=document.getElementById("brake"),boost=document.getElementById("boost"),driftBtn=document.getElementById("drift");
-let W=0,H=0,DPR=1,last=0,running=false;
+const start=document.getElementById("start"),startBtn=document.getElementById("startBtn"),featureBtn=document.getElementById("featureBtn"),rapierBtn=document.getElementById("rapierBtn"),statusEl=document.getElementById("status");
+const panel=document.getElementById("featurePanel"),closePanel=document.getElementById("closePanel");
+const lapEl=document.getElementById("lap"),rankEl=document.getElementById("rank"),speedEl=document.getElementById("speed"),scoreEl=document.getElementById("score"),aiEl=document.getElementById("ai"),nitroEl=document.getElementById("nitro"),leader=document.getElementById("leader"),modeText=document.getElementById("modeText");
+const wheel=document.getElementById("wheel"),knob=document.getElementById("knob");
+const gas=document.getElementById("gas"),brake=document.getElementById("brake"),nitroBtn=document.getElementById("nitroBtn"),driftBtn=document.getElementById("drift");
+let W=0,H=0,DPR=1,last=0,running=false,rapierChecked=false;
 const keys=new Set(),touch={gas:false,brake:false,nitro:false,drift:false,steer:0};
 const world={cx:600,cy:380,outerRx:500,outerRy:285,innerRx:285,innerRy:125};
 const cps=[{x:600,y:92},{x:1065,y:380},{x:600,y:668},{x:135,y:380}];
 const starts=[[600,128],[552,128],[648,128],[504,158],[696,158],[600,188]];
 const specs=[
-["你","#00eaff","🏎️","玩家",1,1],["Tiger","#ff4b2b","🐯","攻擊",1.25,.55],["Turtle","#5dff86","🐢","保守",.55,1.35],
+["你","#00eaff","🏎️","玩家",1,.9],["Tiger","#ff4b2b","🐯","攻擊",1.25,.55],["Turtle","#5dff86","🐢","保守",.55,1.35],
 ["Eagle","#f6ff5d","🦅","抓線",.9,.9],["Fox","#ff4fd8","🦊","假動作",.95,.8],["Bull","#b16bff","🦬","硬擠",1.45,.45]
 ];
-let cars=[],player,smoke=[],skids=[];
+let cars=[],player,smoke=[],skids=[],trees=[],buildings=[],rocks=[];
 function resize(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0)}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 function onRoad(x,y){return ((x-world.cx)**2)/(world.outerRx**2)+((y-world.cy)**2)/(world.outerRy**2)<=1&&((x-world.cx)**2)/(world.innerRx**2)+((y-world.cy)**2)/(world.innerRy**2)>=1}
 function centerAng(x,y){return Math.atan2((y-world.cy)/world.outerRy,(x-world.cx)/world.outerRx)}
 function centerPoint(a){return{x:world.cx+Math.cos(a)*(world.outerRx+world.innerRx)/2,y:world.cy+Math.sin(a)*(world.outerRy+world.innerRy)/2}}
-function fwd(a){return{x:Math.cos(a),y:Math.sin(a)}} function right(a){return{x:-Math.sin(a),y:Math.cos(a)}}
+function fwd(a){return{x:Math.cos(a),y:Math.sin(a)}}function right(a){return{x:-Math.sin(a),y:Math.cos(a)}}
+function initDecor(){trees=[];rocks=[];buildings=[];for(let i=0;i<70;i++){let a=Math.random()*Math.PI*2,r=Math.random()>.45?620+Math.random()*180:175+Math.random()*60,x=world.cx+Math.cos(a)*r,y=world.cy+Math.sin(a)*r;if(!onRoad(x,y))trees.push({x,y,s:.7+Math.random()*1.3})}for(let i=0;i<36;i++){let a=Math.random()*Math.PI*2,r=620+Math.random()*180;rocks.push({x:world.cx+Math.cos(a)*r,y:world.cy+Math.sin(a)*r,s:8+Math.random()*16})}for(let i=0;i<50;i++){let a=Math.random()*Math.PI*2,r=720+Math.random()*240;buildings.push({x:world.cx+Math.cos(a)*r,y:world.cy+Math.sin(a)*r,w:25+Math.random()*40,h:45+Math.random()*100,c:Math.random()>.5?"#00eaff":"#ff3ee8"})}}
 function makeCar(s,i){let p=starts[i];return{name:s[0],color:s[1],emoji:s[2],type:s[3],agg:s[4],caution:s[5],x:p[0],y:p[1],angle:Math.PI/2,speed:0,side:0,yaw:0,lap:1,cp:0,progress:0,nitro:1,score:0,combo:1,drifting:false,isPlayer:i===0,mode:i===0?"玩家":"巡航",max:i===0?420:330+Math.random()*60,acc:i===0?310:235+Math.random()*55,turn:i===0?3.15:2.4+Math.random()*.4,brk:i===0?360:250,grip:i===0?.78:.84,sidePick:Math.random()>.5?1:-1,done:false}}
-function reset(){cars=specs.map(makeCar);player=cars[0];smoke=[];skids=[];running=true}
+function resetGame(){cars=specs.map(makeCar);player=cars[0];smoke=[];skids=[];running=true;modeText.textContent="V6～V9 穩定"}
 function updateCar(c,ctl,dt){
 let drift=ctl.drift&&Math.abs(c.speed)>120,nit=ctl.nitro&&c.nitro>0&&c.speed>110;
 if(ctl.throttle)c.speed+=c.acc*(nit?1.55:1)*dt;if(ctl.brake)c.speed-=c.brk*dt;
@@ -114,34 +188,63 @@ else if(playerAhead&&dp<255){mode="追擊";target={x:player.x,y:player.y};nitro=
 else if(near&&Math.hypot(near.x-c.x,near.y-c.y)<105){mode="超車";target={x:near.x+Math.cos(near.angle+Math.PI/2)*c.sidePick*72,y:near.y+Math.sin(near.angle+Math.PI/2)*c.sidePick*72}}
 else if(c.type==="保守"&&Math.abs(c.speed)>c.max*.78){mode="穩線";brake=true}
 else if(c.type==="假動作"&&dp<180){mode="假動作";c.sidePick=Math.sin(performance.now()*.004)>0?1:-1;target={x:cps[c.cp].x+c.sidePick*80,y:cps[c.cp].y}}
-let diff=adiff(tang(c,target),c.angle),steer=clamp(diff*1.45,-1,1);if(Math.abs(diff)>.65&&Math.abs(c.speed)>240){drift=c.type!=="保守"||Math.abs(diff)>.9;brake=c.caution>1.05}
-if(c.type==="硬擠"&&dp<85){steer*=1.18;throttle=true}c.mode=mode;updateCar(c,{throttle,brake,steer,nitro,drift},dt)}
+let diff=adiff(tang(c,target),c.angle),steer=clamp(diff*1.45,-1,1);
+if(Math.abs(diff)>.65&&Math.abs(c.speed)>240){drift=c.type!=="保守"||Math.abs(diff)>.9;brake=c.caution>1.05}
+if(c.type==="硬擠"&&dp<85){steer*=1.18;throttle=true}
+c.mode=mode;updateCar(c,{throttle,brake,steer,nitro,drift},dt)}
 function updatePlayer(dt){let steerKey=(keys.has("KeyA")||keys.has("ArrowLeft")?-1:0)+(keys.has("KeyD")||keys.has("ArrowRight")?1:0);updateCar(player,{throttle:keys.has("KeyW")||keys.has("ArrowUp")||touch.gas,brake:keys.has("KeyS")||keys.has("ArrowDown")||touch.brake,steer:clamp(steerKey+touch.steer,-1,1),nitro:keys.has("ShiftLeft")||keys.has("ShiftRight")||touch.nitro,drift:keys.has("Space")||touch.drift},dt)}
 function collisions(){for(let i=0;i<cars.length;i++)for(let j=i+1;j<cars.length;j++){let a=cars[i],b=cars[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy);if(d<38&&d>.001){let nx=dx/d,ny=dy/d,p=(38-d)*.55;a.x+=nx*p;a.y+=ny*p;b.x-=nx*p;b.y-=ny*p;a.speed*=.92;b.speed*=.92}}}
 function spawn(c,color,power){if(smoke.length>300)smoke.shift();let F=fwd(c.angle),R=right(c.angle),s=Math.random()>.5?1:-1;smoke.push({x:c.x-F.x*34+R.x*s*13,y:c.y-F.y*34+R.y*s*13,vx:-F.x*45+(Math.random()-.5)*25,vy:-F.y*45+(Math.random()-.5)*25,size:10+Math.random()*16,life:.8+Math.random()*.4,color,power})}
 function updateFX(dt){smoke=smoke.filter(p=>(p.life-=dt,p.x+=p.vx*dt,p.y+=p.vy*dt,p.size+=35*dt,p.life>0));skids.forEach(s=>s.life-=dt*.015);skids=skids.filter(s=>s.life>0);if(skids.length>260)skids.splice(0,skids.length-260)}
 function cam(){let z=clamp(Math.min(W/980,H/620),.55,1.05);ctx.translate(W/2,H/2);ctx.scale(z,z);ctx.translate(-player.x,-player.y)}
-function draw(){
-ctx.fillStyle="#02040a";ctx.fillRect(0,0,W,H);ctx.save();cam();
-let g=ctx.createRadialGradient(world.cx,world.cy,30,world.cx,world.cy,780);g.addColorStop(0,"#0b1c34");g.addColorStop(1,"#02040a");ctx.fillStyle=g;ctx.fillRect(-300,-220,1800,1200);
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+function drawTrack(){
+ctx.save();cam();let g=ctx.createRadialGradient(world.cx,world.cy,30,world.cx,world.cy,820);g.addColorStop(0,"#0b1c34");g.addColorStop(1,"#02040a");ctx.fillStyle=g;ctx.fillRect(-400,-300,2000,1400);
+buildings.forEach(b=>{ctx.save();ctx.translate(b.x,b.y);ctx.fillStyle="#091224";ctx.shadowBlur=15;ctx.shadowColor=b.c;ctx.fillRect(-b.w/2,-b.h,b.w,b.h);ctx.fillStyle=b.c;ctx.globalAlpha=.28;ctx.fillRect(-b.w/2+4,-b.h+8,b.w-8,3);ctx.restore()});
+trees.forEach(t=>{ctx.save();ctx.translate(t.x,t.y);ctx.scale(t.s,t.s);ctx.fillStyle="#3a2110";ctx.fillRect(-4,-10,8,24);ctx.fillStyle="#0b3c24";ctx.beginPath();ctx.moveTo(0,-45);ctx.lineTo(-22,2);ctx.lineTo(22,2);ctx.fill();ctx.restore()});
+rocks.forEach(r=>{ctx.fillStyle="#4d555f";ctx.beginPath();ctx.arc(r.x,r.y,r.s,0,Math.PI*2);ctx.fill()});
 ctx.strokeStyle="rgba(0,234,255,.07)";for(let x=-400;x<1600;x+=60){ctx.beginPath();ctx.moveTo(x,-400);ctx.lineTo(x,1200);ctx.stroke()}for(let y=-400;y<1200;y+=60){ctx.beginPath();ctx.moveTo(-400,y);ctx.lineTo(1600,y);ctx.stroke()}
 ctx.shadowBlur=25;ctx.shadowColor="#00eaff";ctx.fillStyle="#121a26";ctx.beginPath();ctx.ellipse(world.cx,world.cy,world.outerRx,world.outerRy,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#00eaff";ctx.lineWidth=8;ctx.stroke();
-ctx.globalCompositeOperation="destination-out";ctx.beginPath();ctx.ellipse(world.cx,world.cy,world.innerRx,world.innerRy,0,0,Math.PI*2);ctx.fill();ctx.globalCompositeOperation="source-over";ctx.shadowBlur=0;ctx.strokeStyle="#ff3ee8";ctx.lineWidth=7;ctx.beginPath();ctx.ellipse(world.cx,world.cy,world.innerRx,world.innerRy,0,0,Math.PI*2);ctx.stroke();
+ctx.globalCompositeOperation="destination-out";ctx.beginPath();ctx.ellipse(world.cx,world.cy,world.innerRx,world.innerRy,0,0,Math.PI*2);ctx.fill();ctx.globalCompositeOperation="source-over";ctx.shadowBlur=0;
+ctx.strokeStyle="#ff3ee8";ctx.lineWidth=7;ctx.beginPath();ctx.ellipse(world.cx,world.cy,world.innerRx,world.innerRy,0,0,Math.PI*2);ctx.stroke();
 ctx.strokeStyle="rgba(255,255,255,.22)";ctx.setLineDash([26,22]);ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(world.cx,world.cy,(world.outerRx+world.innerRx)/2,(world.outerRy+world.innerRy)/2,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
 for(let i=0;i<96;i++){let a=i/96*Math.PI*2;ctx.save();ctx.translate(world.cx+Math.cos(a)*world.outerRx,world.cy+Math.sin(a)*world.outerRy);ctx.rotate(a);ctx.fillStyle=i%2?"#fff":"#ff213e";ctx.fillRect(-18,-5,36,10);ctx.restore()}
+for(let i=0;i<64;i++){let a=i/64*Math.PI*2;ctx.save();ctx.translate(world.cx+Math.cos(a)*540,world.cy+Math.sin(a)*315);ctx.rotate(a);ctx.fillStyle="#0b1728";ctx.fillRect(-18,-5,36,10);ctx.restore()}
+[[1020,260,-.5],[1060,380,-.9],[185,500,2.6],[140,360,2.2]].forEach(s=>{ctx.save();ctx.translate(s[0],s[1]);ctx.rotate(s[2]);ctx.fillStyle="#090909";ctx.fillRect(-45,-20,90,40);ctx.fillStyle="#ffc400";for(let i=-1;i<=1;i++){ctx.save();ctx.translate(i*25,0);ctx.rotate(Math.PI/7);ctx.fillRect(-6,-17,12,34);ctx.restore()}ctx.restore()});
+for(let i=0;i<20;i++){let a=i/20*Math.PI*2,x=world.cx+Math.cos(a)*570,y=world.cy+Math.sin(a)*340;ctx.fillStyle="#111822";ctx.fillRect(x-3,y-34,6,68);ctx.fillStyle="#9df7ff";ctx.shadowBlur=15;ctx.shadowColor="#00eaff";ctx.fillRect(x-12,y-38,24,6);ctx.shadowBlur=0}
 skids.forEach(s=>{ctx.save();ctx.globalAlpha=.35*s.life;ctx.translate(s.x,s.y);ctx.rotate(s.a);ctx.fillStyle="#020202";ctx.fillRect(-20,-4,40,8);ctx.restore()});
-smoke.forEach(p=>{ctx.save();ctx.globalAlpha=Math.max(0,p.life)*.28*p.power;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();ctx.restore()});
-ctx.restore();
-cars.slice().sort((a,b)=>a.y-b.y).forEach(drawCar);drawMini();drawSpeed()}
-function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+smoke.forEach(p=>{ctx.save();ctx.globalAlpha=Math.max(0,p.life)*.28*p.power;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();ctx.restore()});ctx.restore()}
 function drawCar(c){ctx.save();cam();ctx.translate(c.x,c.y);ctx.rotate(c.angle);ctx.shadowBlur=c.isPlayer?22:14;ctx.shadowColor=c.color;ctx.fillStyle=c.color;rr(-31,-15,62,30,8);ctx.fill();ctx.fillStyle="#02080f";rr(-10,-12,24,24,6);ctx.fill();ctx.fillStyle="#fff";ctx.beginPath();ctx.moveTo(35,0);ctx.lineTo(18,-10);ctx.lineTo(18,10);ctx.fill();ctx.fillStyle="#050505";ctx.fillRect(-24,-20,14,7);ctx.fillRect(-24,13,14,7);ctx.fillRect(14,-20,14,7);ctx.fillRect(14,13,14,7);ctx.restore()}
 function drawMini(){let x=14,y=H-194,w=124,h=82;ctx.save();ctx.fillStyle="rgba(0,0,0,.36)";ctx.strokeStyle="rgba(0,234,255,.55)";rr(x,y,w,h,12);ctx.fill();ctx.stroke();ctx.translate(x+w/2,y+h/2);ctx.scale(.095,.095);ctx.strokeStyle="#00eaff";ctx.lineWidth=28;ctx.beginPath();ctx.ellipse(0,0,world.outerRx,world.outerRy,0,0,Math.PI*2);ctx.stroke();ctx.strokeStyle="#ff3ee8";ctx.lineWidth=22;ctx.beginPath();ctx.ellipse(0,0,world.innerRx,world.innerRy,0,0,Math.PI*2);ctx.stroke();cars.forEach(c=>{ctx.fillStyle=c.isPlayer?"#00eaff":"#fff";ctx.beginPath();ctx.arc(c.x-world.cx,c.y-world.cy,c.isPlayer?34:25,0,Math.PI*2);ctx.fill()});ctx.restore()}
 function drawSpeed(){let size=124,x=W-size-14,y=H-size-102,cx=x+size/2,cy=y+size/2,sp=Math.round(Math.abs(player.speed)*.85),pct=Math.min(sp/360,1),sa=Math.PI*.78,ea=Math.PI*2.22,a=sa+(ea-sa)*pct;ctx.save();ctx.lineWidth=8;ctx.strokeStyle="rgba(255,255,255,.18)";ctx.beginPath();ctx.arc(cx,cy,50,sa,ea);ctx.stroke();ctx.strokeStyle="#00eaff";ctx.beginPath();ctx.arc(cx,cy,50,sa,a);ctx.stroke();ctx.save();ctx.translate(cx,cy);ctx.rotate(a);ctx.strokeStyle="#ff3ee8";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(44,0);ctx.stroke();ctx.restore();ctx.fillStyle="#fff";ctx.font="bold 28px Arial";ctx.textAlign="center";ctx.fillText(sp,cx,cy+12);ctx.fillStyle="rgba(255,255,255,.75)";ctx.font="12px Arial";ctx.fillText("KM/H",cx,cy+32);ctx.restore()}
-function hud(){let ranked=cars.slice().sort((a,b)=>(b.lap*10+b.progress)-(a.lap*10+a.progress)),rank=ranked.indexOf(player)+1;lapEl.textContent=Math.min(player.lap,3);rankEl.textContent=rank;speedEl.textContent=Math.round(Math.abs(player.speed)*.85);scoreEl.textContent=player.score;nitroEl.style.width=Math.round(player.nitro*100)+"%";leader.innerHTML='<div style="color:#00eaff;font-weight:900">POSITION</div>'+ranked.map((c,i)=>`<div class="row ${c.isPlayer?'me':''}"><span>${i+1} ${c.emoji}${c.name}</span><span>${c.mode}</span></div>`).join("")}
-function loop(t){let dt=Math.min((t-last)/1000,.033);last=t;if(running){updatePlayer(dt);cars.slice(1).forEach(c=>updateAI(c,dt));collisions();if(player.done){running=false;start.style.display="flex";start.querySelector("h1").textContent="FINISH!";start.querySelector("p").textContent=`完成比賽！漂移分數：${player.score}`;startBtn.textContent="重新開始"}}updateFX(dt);hud();draw();requestAnimationFrame(loop)}
+function draw(){ctx.fillStyle="#02040a";ctx.fillRect(0,0,W,H);drawTrack();cars.slice().sort((a,b)=>a.y-b.y).forEach(drawCar);drawMini();drawSpeed()}
+function updateHUD(){let ranked=cars.slice().sort((a,b)=>(b.lap*10+b.progress)-(a.lap*10+a.progress)),rank=ranked.indexOf(player)+1;lapEl.textContent=Math.min(player.lap,3);rankEl.textContent=rank;speedEl.textContent=Math.round(Math.abs(player.speed)*.85);scoreEl.textContent=player.score;nitroEl.style.width=Math.round(player.nitro*100)+"%";let n=cars.slice(1).sort((a,b)=>Math.hypot(a.x-player.x,a.y-player.y)-Math.hypot(b.x-player.x,b.y-player.y))[0];aiEl.textContent=n?n.emoji+" "+n.mode:"無";leader.innerHTML='<div style="color:#00eaff;font-weight:900">POSITION</div>'+ranked.map((c,i)=>`<div class="row ${c.isPlayer?'me':''}"><span>${i+1} ${c.emoji}${c.name}</span><span>${c.mode}</span></div>`).join("")}
+function loop(t){let dt=Math.min((t-last)/1000,.033);last=t;if(running){updatePlayer(dt);cars.slice(1).forEach(c=>updateAI(c,dt));collisions();if(player.done){running=false;start.style.display="flex";start.querySelector("h1").textContent="FINISH!";start.querySelector("h2").textContent="比賽完成";start.querySelector("p").textContent=`漂移分數：${player.score}`;startBtn.textContent="重新開始"}}updateFX(dt);updateHUD();draw();requestAnimationFrame(loop)}
 function bind(btn,key){let set=v=>{touch[key]=v;btn.classList.toggle("active",v)};["pointerdown","touchstart"].forEach(e=>btn.addEventListener(e,ev=>{ev.preventDefault();set(true)},{passive:false}));["pointerup","pointerleave","pointercancel","touchend","touchcancel"].forEach(e=>btn.addEventListener(e,ev=>{ev.preventDefault();set(false)},{passive:false}))}
-function setup(){bind(gas,"gas");bind(brake,"brake");bind(boost,"nitro");bind(driftBtn,"drift");let active=null;function upd(x,y){let r=steer.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,m=r.width*.38,nx=clamp((x-cx)/m,-1,1),ny=clamp((y-cy)/m,-1,1),len=Math.min(1,Math.hypot(nx,ny)),a=Math.atan2(ny,nx);touch.steer=nx;knob.style.transform=`translate(${Math.cos(a)*len*m}px,${Math.sin(a)*len*m}px)`}function resetS(){touch.steer=0;knob.style.transform="translate(0,0)";active=null}steer.addEventListener("pointerdown",e=>{e.preventDefault();active=e.pointerId;steer.setPointerCapture(e.pointerId);upd(e.clientX,e.clientY)});steer.addEventListener("pointermove",e=>{if(e.pointerId!==active)return;e.preventDefault();upd(e.clientX,e.clientY)});steer.addEventListener("pointerup",resetS);steer.addEventListener("pointercancel",resetS);document.addEventListener("touchmove",e=>e.preventDefault(),{passive:false})}
-addEventListener("keydown",e=>{keys.add(e.code);if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space","ShiftLeft","ShiftRight"].includes(e.code))e.preventDefault()});addEventListener("keyup",e=>keys.delete(e.code));addEventListener("resize",resize);startBtn.addEventListener("click",()=>{reset();start.style.display="none"});resize();setup();reset();running=false;requestAnimationFrame(loop);
+function setupTouch(){bind(gas,"gas");bind(brake,"brake");bind(nitroBtn,"nitro");bind(driftBtn,"drift");let active=null;function upd(x,y){let r=wheel.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,m=r.width*.38,nx=clamp((x-cx)/m,-1,1),ny=clamp((y-cy)/m,-1,1),len=Math.min(1,Math.hypot(nx,ny)),a=Math.atan2(ny,nx);touch.steer=nx;knob.style.transform=`translate(${Math.cos(a)*len*m}px,${Math.sin(a)*len*m}px)`}function resetS(){touch.steer=0;knob.style.transform="translate(0,0)";active=null}wheel.addEventListener("pointerdown",e=>{e.preventDefault();active=e.pointerId;wheel.setPointerCapture(e.pointerId);upd(e.clientX,e.clientY)});wheel.addEventListener("pointermove",e=>{if(e.pointerId!==active)return;e.preventDefault();upd(e.clientX,e.clientY)});wheel.addEventListener("pointerup",resetS);wheel.addEventListener("pointercancel",resetS);document.addEventListener("touchmove",e=>e.preventDefault(),{passive:false})}
+async function checkRapier(){
+  if(rapierChecked){statusEl.textContent="已檢查過：目前主遊戲維持穩定模式。";return}
+  statusEl.textContent="檢查 Rapier 載入中...";
+  try{
+    const mod=await import("https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.14.0/rapier.es.js");
+    await mod.default.init();
+    const R=mod.default;
+    const w=new R.World({x:0,y:0,z:0});
+    const body=w.createRigidBody(R.RigidBodyDesc.dynamic().setTranslation(0,0,0));
+    w.createCollider(R.ColliderDesc.cuboid(1,1,1),body);
+    w.step();
+    statusEl.textContent="Rapier 可載入 ✅ 之後可以做進階專案版。主遊戲先保持穩定。";
+    modeText.textContent="V10 Rapier 可用";
+  }catch(e){
+    statusEl.textContent="Rapier 在此裝置/網路載入失敗，主遊戲不受影響，仍可玩穩定版。";
+    modeText.textContent="V6～V9 穩定";
+  }
+  rapierChecked=true;
+}
+addEventListener("keydown",e=>{keys.add(e.code);if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space","ShiftLeft","ShiftRight"].includes(e.code))e.preventDefault()});addEventListener("keyup",e=>keys.delete(e.code));addEventListener("resize",resize);
+startBtn.addEventListener("click",()=>{resetGame();start.style.display="none"});
+featureBtn.addEventListener("click",()=>panel.style.display="block");closePanel.addEventListener("click",()=>panel.style.display="none");rapierBtn.addEventListener("click",checkRapier);
+resize();initDecor();setupTouch();resetGame();running=false;requestAnimationFrame(loop);
 })();
 </script>
 </body>
