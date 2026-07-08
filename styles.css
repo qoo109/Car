@@ -1,87 +1,231 @@
+* { box-sizing: border-box; }
 html, body {
-  margin: 0; width: 100%; height: 100%; overflow: hidden;
-  background: #02040a; color: white;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #050811;
+  color: #fff;
   font-family: Arial, "Microsoft JhengHei", sans-serif;
-  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 canvas { display: block; }
+#game {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #050811;
+}
+.glass, .glassLite {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.glass {
+  background: rgba(0,0,0,0.34);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.16);
+}
+.glassLite {
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+#orientationHint {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.48);
+  color: rgba(255,255,255,0.88);
+  border: 1px solid rgba(255,255,255,0.12);
+  display: none;
+}
+#topLeftPanel {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top));
+  left: max(8px, env(safe-area-inset-left));
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 6px;
+  padding: 8px;
+  border-radius: 12px;
+}
+.settingRow {
+  min-width: 54px;
+  text-align: center;
+  line-height: 1.15;
+  font-size: 12px;
+  color: rgba(255,255,255,0.76);
+}
+.settingRow span { display: block; letter-spacing: 1px; }
+.settingRow b { display: block; color: #fff; margin-top: 2px; }
 #hud {
-  position: fixed; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left));
-  z-index: 10; min-width: 230px; padding: 12px 15px; line-height: 1.55;
-  background: rgba(0,0,0,.50); border: 1px solid rgba(0,234,255,.68); border-radius: 16px;
-  box-shadow: 0 0 24px rgba(0,234,255,.36); backdrop-filter: blur(8px);
+  position: fixed;
+  top: max(64px, calc(env(safe-area-inset-top) + 60px));
+  left: max(8px, env(safe-area-inset-left));
+  z-index: 10;
+  min-width: 168px;
+  padding: 10px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  line-height: 1.48;
 }
-.logo { color: #00eaff; font-weight: 900; letter-spacing: 2px; }
-.barWrap { margin-top: 7px; width: 100%; height: 11px; border: 1px solid #00eaff; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,.08); }
-#nitroBar { height: 100%; width: 100%; background: linear-gradient(90deg, #00eaff, #7a5cff, #ff3ee8); box-shadow: 0 0 12px #00eaff; }
-#leaderboard {
-  position: fixed; top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right));
-  z-index: 10; min-width: 225px; padding: 12px 14px; background: rgba(0,0,0,.42);
-  border: 1px solid rgba(255,255,255,.22); border-radius: 14px; backdrop-filter: blur(8px);
-  box-shadow: 0 0 18px rgba(0,234,255,.22); font-size: 13px; line-height: 1.55;
-}
-#leaderboard .boardTitle { color: #00eaff; font-weight: 900; letter-spacing: 1px; margin-bottom: 6px; }
-#leaderboard .row { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(255,255,255,.08); padding: 2px 0; }
-#leaderboard .me { color: #00eaff; text-shadow: 0 0 8px #00eaff; }
-#minimap {
-  position: fixed; left: max(14px, env(safe-area-inset-left)); bottom: calc(116px + env(safe-area-inset-bottom));
-  z-index: 10; width: 190px; height: 130px; background: rgba(0,0,0,.36);
-  border: 1px solid rgba(0,234,255,.55); border-radius: 14px; box-shadow: 0 0 18px rgba(0,234,255,.25);
+.logo {
+  color: #00eaff;
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
 }
 #speedometer {
-  position: fixed; right: max(20px, env(safe-area-inset-right)); bottom: calc(105px + env(safe-area-inset-bottom));
-  z-index: 10; width: 190px; height: 190px; filter: drop-shadow(0 0 14px rgba(0,234,255,.4));
+  position: fixed;
+  right: max(12px, env(safe-area-inset-right));
+  top: max(12px, env(safe-area-inset-top));
+  z-index: 11;
+  width: 170px;
+  height: 170px;
+  border-radius: 26px;
+  filter: drop-shadow(0 0 16px rgba(0, 234, 255, 0.24));
 }
-#mobileControls {
-  position: fixed; inset: auto 0 0 0; z-index: 30; display: flex; justify-content: space-between; align-items: flex-end;
-  padding: 0 max(18px, env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+#meter { width: 170px; height: 170px; }
+#cornerTools {
+  position: fixed;
+  right: max(14px, env(safe-area-inset-right));
+  top: calc(max(12px, env(safe-area-inset-top)) + 180px);
+  z-index: 12;
+}
+.toolBtn {
+  width: 54px;
+  height: 54px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.10);
+  color: #fff;
+  font-size: 26px;
+  backdrop-filter: blur(10px);
+  -webkit-tap-highlight-color: transparent;
+}
+#controls {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  z-index: 12;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 max(18px, env(safe-area-inset-right)) 0 max(18px, env(safe-area-inset-left));
   pointer-events: none;
 }
-#steerPad {
-  width: 132px; height: 132px; border-radius: 50%; border: 1px solid rgba(0,234,255,.7);
-  background: radial-gradient(circle, rgba(0,234,255,.12), rgba(0,0,0,.42));
-  box-shadow: 0 0 22px rgba(0,234,255,.32), inset 0 0 18px rgba(0,234,255,.12);
-  position: relative; pointer-events: auto; backdrop-filter: blur(8px); -webkit-tap-highlight-color: transparent;
+#leftControls, #rightControls { pointer-events: auto; }
+#leftControls { display: flex; gap: 14px; }
+#rightControls { display: flex; align-items: flex-end; gap: 12px; }
+.roundBtn {
+  width: 78px;
+  height: 100px;
+  border-radius: 26px;
+  border: 2px solid rgba(255,255,255,0.62);
+  color: #fff;
+  background: rgba(255,255,255,0.10);
+  font-size: 34px;
+  font-weight: 900;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 18px rgba(255,255,255,0.10);
+  -webkit-tap-highlight-color: transparent;
 }
-#steerPad span { position: absolute; left:0; right:0; bottom:16px; text-align:center; font-size:11px; color:rgba(255,255,255,.55); letter-spacing:1px; }
-#steerKnob {
-  position:absolute; left:50%; top:50%; width:54px; height:54px; margin-left:-27px; margin-top:-27px;
-  border-radius:50%; background:rgba(0,234,255,.28); border:1px solid rgba(255,255,255,.55); box-shadow:0 0 18px rgba(0,234,255,.55);
+.roundBtn.active, .roundBtn:active,
+.pedalBtn.active, .pedalBtn:active,
+.toolBtn:active {
+  transform: scale(0.95);
+  filter: brightness(1.12);
 }
-.rightControls { display: grid; grid-template-columns: 70px 82px; grid-template-rows: 64px 88px; gap: 10px; pointer-events: auto; align-items: end; }
-.touchBtn {
-  border-radius: 50%; border:1px solid rgba(0,234,255,.85); background:rgba(0,12,24,.55); color:#eaffff;
-  font-size:12px; font-weight:900; box-shadow:0 0 18px rgba(0,234,255,.35), inset 0 0 16px rgba(0,234,255,.15);
-  backdrop-filter: blur(8px); -webkit-tap-highlight-color: transparent;
+.pedalBtn {
+  width: 82px;
+  border-radius: 20px;
+  border: 2px solid rgba(255,255,255,0.58);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+  writing-mode: vertical-rl;
+  letter-spacing: 4px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 18px rgba(255,255,255,0.10);
+  -webkit-tap-highlight-color: transparent;
 }
-.touchBtn:active, .touchBtn.active { transform: scale(.94); background: rgba(0,234,255,.28); }
-.touchBtn.small { width:66px; height:66px; }
-.touchBtn.drift { width:74px; height:74px; border-color:rgba(255,196,0,.9); box-shadow:0 0 18px rgba(255,196,0,.32), inset 0 0 16px rgba(255,196,0,.12); }
-.touchBtn.nitro { width:74px; height:74px; border-color:rgba(255,62,232,.9); box-shadow:0 0 18px rgba(255,62,232,.35), inset 0 0 16px rgba(255,62,232,.15); }
-.touchBtn.gas { width:88px; height:88px; border-color:rgba(0,255,170,.9); box-shadow:0 0 18px rgba(0,255,170,.35), inset 0 0 16px rgba(0,255,170,.15); }
+.pedalBtn.brake {
+  height: 78px;
+  background: linear-gradient(180deg, rgba(255,95,95,0.48), rgba(165,32,32,0.30));
+}
+.pedalBtn.gas {
+  height: 132px;
+  background: linear-gradient(180deg, rgba(60,240,220,0.48), rgba(5,145,130,0.30));
+}
 #start {
-  position: fixed; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  background: radial-gradient(circle at center, rgba(0,234,255,.16), rgba(0,0,0,.92)), #02040a; text-align:center;
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 26px;
+  text-align: center;
+  background: radial-gradient(circle at center, rgba(0,234,255,0.12), rgba(0,0,0,0.90)), #050811;
 }
-#start h1 { margin:0; font-size:clamp(42px,8vw,82px); color:#00eaff; text-shadow:0 0 28px #00eaff; letter-spacing:4px; }
-#start p { color:#dffcff; margin:16px 0 26px; max-width:560px; }
-.startHint { margin-top:18px; color:rgba(255,255,255,.68); font-size:14px; }
-button { border:0; border-radius:999px; padding:14px 34px; font-size:20px; font-weight:bold; color:#001018; background:#00eaff; cursor:pointer; box-shadow:0 0 24px #00eaff; }
-button:hover { transform: scale(1.05); }
-
-@media (max-width: 900px), (pointer: coarse) {
-  #hud { top:max(7px, env(safe-area-inset-top)); left:max(7px, env(safe-area-inset-left)); min-width:158px; padding:8px 10px; font-size:11px; line-height:1.38; border-radius:12px; }
-  #leaderboard { top:max(7px, env(safe-area-inset-top)); right:max(7px, env(safe-area-inset-right)); min-width:130px; padding:7px 9px; font-size:10px; line-height:1.25; border-radius:12px; }
-  #minimap { left:max(8px, env(safe-area-inset-left)); bottom:calc(110px + env(safe-area-inset-bottom)); width:128px; height:88px; }
-  #speedometer { right:max(8px, env(safe-area-inset-right)); bottom:calc(100px + env(safe-area-inset-bottom)); width:128px; height:128px; }
-  #steerPad { width:122px; height:122px; }
-  .rightControls { grid-template-columns:62px 78px; grid-template-rows:58px 82px; gap:8px; }
-  .touchBtn.small { width:58px; height:58px; } .touchBtn.drift { width:66px; height:66px; } .touchBtn.nitro { width:66px; height:66px; } .touchBtn.gas { width:82px; height:82px; }
-  #start h1 { font-size:42px; } #start p { font-size:14px; max-width:300px; }
+.startPanel {
+  width: min(760px, 100%);
+  padding: 28px 24px;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  backdrop-filter: blur(12px);
+}
+#start h1 {
+  margin: 0;
+  color: #00eaff;
+  font-size: clamp(42px, 9vw, 88px);
+  letter-spacing: 4px;
+  text-shadow: 0 0 28px rgba(0,234,255,0.72);
+}
+#start h2 { margin: 12px 0 8px; font-size: clamp(20px, 4vw, 34px); }
+#start p { max-width: 680px; margin: 0 auto; line-height: 1.65; color: #e8faff; }
+.startActions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+#startBtn, .secondaryBtn {
+  border: 0;
+  border-radius: 999px;
+  padding: 15px 26px;
+  font-size: 22px;
+  font-weight: 900;
+}
+#startBtn {
+  color: #061018;
+  background: #00eaff;
+  box-shadow: 0 0 28px rgba(0,234,255,0.68);
+}
+.secondaryBtn {
+  color: #fff;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.small { font-size: 13px; color: rgba(255,255,255,0.72) !important; margin-top: 10px !important; }
+@media (max-width: 900px) {
+  #hud { display: none; }
+  #topLeftPanel { transform: scale(0.92); transform-origin: top left; }
+  #speedometer, #meter { width: 132px; height: 132px; }
+  #speedometer { width: 132px; height: 132px; }
+  #cornerTools { top: calc(max(12px, env(safe-area-inset-top)) + 142px); }
+  .toolBtn { width: 48px; height: 48px; font-size: 23px; }
+  .roundBtn { width: 72px; height: 92px; font-size: 30px; }
+  .pedalBtn { width: 72px; font-size: 16px; }
+  .pedalBtn.brake { height: 72px; }
+  .pedalBtn.gas { height: 120px; }
 }
 @media (orientation: portrait) and (max-width: 900px) {
-  #start::after {
-    content:"建議橫向遊玩，畫面和操作會比較像賽車遊戲";
-    position:absolute; bottom:22px; left:24px; right:24px; color:rgba(255,255,255,.72); font-size:13px;
-  }
+  #orientationHint { display: block; }
 }
