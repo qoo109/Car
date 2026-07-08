@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neon Racer 3D V3</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="hud">
+    <div class="logo">NEON RACER 3D V3</div>
+    <div>圈數：<span id="lap">1</span> / 3</div>
+    <div>排名：<span id="rank">1</span> / 6</div>
+    <div>速度：<span id="speed">0</span> km/h</div>
+    <div>AI 狀態：<span id="aiState">追擊中</span></div>
+    <div>音效：<span id="audioState">待啟動</span></div>
+    <div class="barWrap"><div id="nitroBar"></div></div>
+    <div class="hint">
+      W/S 或 ↑/↓：加速煞車<br>
+      A/D 或 ←/→：左右切線<br>
+      Shift：氮氣｜R：雨天｜T：日夜
+    </div>
+  </div>
+
+  <div id="start">
+    <h1>NEON RACER 3D</h1>
+    <p>V3：音效、音樂、進階 AI 戰術</p>
+    <button id="startBtn">開始比賽</button>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
