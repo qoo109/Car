@@ -2,43 +2,86 @@ html, body {
   margin: 0; width: 100%; height: 100%; overflow: hidden;
   background: #02040a; color: white;
   font-family: Arial, "Microsoft JhengHei", sans-serif;
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
 canvas { display: block; }
 #hud {
-  position: fixed; top: 16px; left: 16px; z-index: 10;
-  min-width: 250px; padding: 14px 18px; line-height: 1.75;
-  background: rgba(0, 0, 0, 0.48);
-  border: 1px solid rgba(0, 234, 255, 0.68);
-  border-radius: 16px;
-  box-shadow: 0 0 24px rgba(0, 234, 255, 0.38);
-  backdrop-filter: blur(8px);
+  position: fixed; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left));
+  z-index: 10; min-width: 230px; padding: 12px 15px; line-height: 1.55;
+  background: rgba(0,0,0,.50); border: 1px solid rgba(0,234,255,.68); border-radius: 16px;
+  box-shadow: 0 0 24px rgba(0,234,255,.36); backdrop-filter: blur(8px);
 }
-.logo { color: #00eaff; font-weight: 800; letter-spacing: 2px; }
-.hint { margin-top: 8px; color: #bdf8ff; font-size: 13px; }
-.barWrap {
-  margin-top: 8px; width: 100%; height: 12px;
-  border: 1px solid #00eaff; border-radius: 999px;
-  overflow: hidden; background: rgba(255,255,255,.08);
+.logo { color: #00eaff; font-weight: 900; letter-spacing: 2px; }
+.barWrap { margin-top: 7px; width: 100%; height: 11px; border: 1px solid #00eaff; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,.08); }
+#nitroBar { height: 100%; width: 100%; background: linear-gradient(90deg, #00eaff, #7a5cff, #ff3ee8); box-shadow: 0 0 12px #00eaff; }
+#leaderboard {
+  position: fixed; top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right));
+  z-index: 10; min-width: 225px; padding: 12px 14px; background: rgba(0,0,0,.42);
+  border: 1px solid rgba(255,255,255,.22); border-radius: 14px; backdrop-filter: blur(8px);
+  box-shadow: 0 0 18px rgba(0,234,255,.22); font-size: 13px; line-height: 1.55;
 }
-#nitroBar {
-  height: 100%; width: 100%;
-  background: linear-gradient(90deg, #00eaff, #7a5cff, #ff3ee8);
-  box-shadow: 0 0 12px #00eaff;
+#leaderboard .boardTitle { color: #00eaff; font-weight: 900; letter-spacing: 1px; margin-bottom: 6px; }
+#leaderboard .row { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(255,255,255,.08); padding: 2px 0; }
+#leaderboard .me { color: #00eaff; text-shadow: 0 0 8px #00eaff; }
+#minimap {
+  position: fixed; left: max(14px, env(safe-area-inset-left)); bottom: calc(116px + env(safe-area-inset-bottom));
+  z-index: 10; width: 190px; height: 130px; background: rgba(0,0,0,.36);
+  border: 1px solid rgba(0,234,255,.55); border-radius: 14px; box-shadow: 0 0 18px rgba(0,234,255,.25);
 }
+#speedometer {
+  position: fixed; right: max(20px, env(safe-area-inset-right)); bottom: calc(105px + env(safe-area-inset-bottom));
+  z-index: 10; width: 190px; height: 190px; filter: drop-shadow(0 0 14px rgba(0,234,255,.4));
+}
+#mobileControls {
+  position: fixed; inset: auto 0 0 0; z-index: 30; display: flex; justify-content: space-between; align-items: flex-end;
+  padding: 0 max(18px, env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+#steerPad {
+  width: 132px; height: 132px; border-radius: 50%; border: 1px solid rgba(0,234,255,.7);
+  background: radial-gradient(circle, rgba(0,234,255,.12), rgba(0,0,0,.42));
+  box-shadow: 0 0 22px rgba(0,234,255,.32), inset 0 0 18px rgba(0,234,255,.12);
+  position: relative; pointer-events: auto; backdrop-filter: blur(8px); -webkit-tap-highlight-color: transparent;
+}
+#steerPad span { position: absolute; left:0; right:0; bottom:16px; text-align:center; font-size:11px; color:rgba(255,255,255,.55); letter-spacing:1px; }
+#steerKnob {
+  position:absolute; left:50%; top:50%; width:54px; height:54px; margin-left:-27px; margin-top:-27px;
+  border-radius:50%; background:rgba(0,234,255,.28); border:1px solid rgba(255,255,255,.55); box-shadow:0 0 18px rgba(0,234,255,.55);
+}
+.rightControls { display: grid; grid-template-columns: 70px 82px; grid-template-rows: 64px 88px; gap: 10px; pointer-events: auto; align-items: end; }
+.touchBtn {
+  border-radius: 50%; border:1px solid rgba(0,234,255,.85); background:rgba(0,12,24,.55); color:#eaffff;
+  font-size:12px; font-weight:900; box-shadow:0 0 18px rgba(0,234,255,.35), inset 0 0 16px rgba(0,234,255,.15);
+  backdrop-filter: blur(8px); -webkit-tap-highlight-color: transparent;
+}
+.touchBtn:active, .touchBtn.active { transform: scale(.94); background: rgba(0,234,255,.28); }
+.touchBtn.small { width:66px; height:66px; }
+.touchBtn.drift { width:74px; height:74px; border-color:rgba(255,196,0,.9); box-shadow:0 0 18px rgba(255,196,0,.32), inset 0 0 16px rgba(255,196,0,.12); }
+.touchBtn.nitro { width:74px; height:74px; border-color:rgba(255,62,232,.9); box-shadow:0 0 18px rgba(255,62,232,.35), inset 0 0 16px rgba(255,62,232,.15); }
+.touchBtn.gas { width:88px; height:88px; border-color:rgba(0,255,170,.9); box-shadow:0 0 18px rgba(0,255,170,.35), inset 0 0 16px rgba(0,255,170,.15); }
 #start {
-  position: fixed; inset: 0; z-index: 20;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: radial-gradient(circle at center, rgba(0, 234, 255, 0.16), rgba(0, 0, 0, 0.9)), #02040a;
-  text-align: center;
+  position: fixed; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background: radial-gradient(circle at center, rgba(0,234,255,.16), rgba(0,0,0,.92)), #02040a; text-align:center;
 }
-#start h1 {
-  margin: 0; font-size: clamp(42px, 8vw, 82px);
-  color: #00eaff; text-shadow: 0 0 28px #00eaff; letter-spacing: 4px;
-}
-#start p { color: #dffcff; margin: 16px 0 28px; }
-button {
-  border: 0; border-radius: 999px; padding: 14px 34px;
-  font-size: 20px; font-weight: bold; color: #001018;
-  background: #00eaff; cursor: pointer; box-shadow: 0 0 24px #00eaff;
-}
+#start h1 { margin:0; font-size:clamp(42px,8vw,82px); color:#00eaff; text-shadow:0 0 28px #00eaff; letter-spacing:4px; }
+#start p { color:#dffcff; margin:16px 0 26px; max-width:560px; }
+.startHint { margin-top:18px; color:rgba(255,255,255,.68); font-size:14px; }
+button { border:0; border-radius:999px; padding:14px 34px; font-size:20px; font-weight:bold; color:#001018; background:#00eaff; cursor:pointer; box-shadow:0 0 24px #00eaff; }
 button:hover { transform: scale(1.05); }
+
+@media (max-width: 900px), (pointer: coarse) {
+  #hud { top:max(7px, env(safe-area-inset-top)); left:max(7px, env(safe-area-inset-left)); min-width:158px; padding:8px 10px; font-size:11px; line-height:1.38; border-radius:12px; }
+  #leaderboard { top:max(7px, env(safe-area-inset-top)); right:max(7px, env(safe-area-inset-right)); min-width:130px; padding:7px 9px; font-size:10px; line-height:1.25; border-radius:12px; }
+  #minimap { left:max(8px, env(safe-area-inset-left)); bottom:calc(110px + env(safe-area-inset-bottom)); width:128px; height:88px; }
+  #speedometer { right:max(8px, env(safe-area-inset-right)); bottom:calc(100px + env(safe-area-inset-bottom)); width:128px; height:128px; }
+  #steerPad { width:122px; height:122px; }
+  .rightControls { grid-template-columns:62px 78px; grid-template-rows:58px 82px; gap:8px; }
+  .touchBtn.small { width:58px; height:58px; } .touchBtn.drift { width:66px; height:66px; } .touchBtn.nitro { width:66px; height:66px; } .touchBtn.gas { width:82px; height:82px; }
+  #start h1 { font-size:42px; } #start p { font-size:14px; max-width:300px; }
+}
+@media (orientation: portrait) and (max-width: 900px) {
+  #start::after {
+    content:"建議橫向遊玩，畫面和操作會比較像賽車遊戲";
+    position:absolute; bottom:22px; left:24px; right:24px; color:rgba(255,255,255,.72); font-size:13px;
+  }
+}

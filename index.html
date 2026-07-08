@@ -2,30 +2,45 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Neon Racer 3D V3</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Neon Racer 3D V10</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div id="hud">
-    <div class="logo">NEON RACER 3D V3</div>
+    <div class="logo">NEON RACER V10</div>
+    <div>物理：<span>Rapier</span></div>
+    <div>車模：<span>GLTF</span></div>
     <div>圈數：<span id="lap">1</span> / 3</div>
     <div>排名：<span id="rank">1</span> / 6</div>
     <div>速度：<span id="speed">0</span> km/h</div>
-    <div>AI 狀態：<span id="aiState">追擊中</span></div>
-    <div>音效：<span id="audioState">待啟動</span></div>
+    <div>漂移：<span id="driftScore">0</span></div>
+    <div>AI：<span id="aiState">待機</span></div>
     <div class="barWrap"><div id="nitroBar"></div></div>
-    <div class="hint">
-      W/S 或 ↑/↓：加速煞車<br>
-      A/D 或 ←/→：左右切線<br>
-      Shift：氮氣｜R：雨天｜T：日夜
+  </div>
+
+  <div id="leaderboard"></div>
+  <canvas id="minimap" width="190" height="130"></canvas>
+  <canvas id="speedometer" width="190" height="190"></canvas>
+
+  <div id="mobileControls">
+    <div id="steerPad">
+      <div id="steerKnob"></div>
+      <span>STEER</span>
+    </div>
+    <div class="rightControls">
+      <button class="touchBtn small" id="btnBrake">BRAKE</button>
+      <button class="touchBtn drift" id="btnDrift">DRIFT</button>
+      <button class="touchBtn nitro" id="btnNitro">NITRO</button>
+      <button class="touchBtn gas" id="btnGas">GAS</button>
     </div>
   </div>
 
   <div id="start">
     <h1>NEON RACER 3D</h1>
-    <p>V3：音效、音樂、進階 AI 戰術</p>
+    <p>V10：Rapier 真物理碰撞 + GLTF 高品質車模</p>
     <button id="startBtn">開始比賽</button>
+    <div class="startHint">建議手機橫向遊玩｜第一次載入需要網路抓 Three.js / Rapier</div>
   </div>
 
   <script type="module" src="app.js"></script>
