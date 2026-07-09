@@ -4,7 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <meta name="theme-color" content="#07111f" />
-  <title>全 3D 模型車高空賽道 V6.6</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="screen-orientation" content="landscape" />
+  <title>全 3D 模型車高空賽道 V6.9</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -26,13 +29,13 @@
 
     <section id="notice" class="notice">
       <div class="notice-card">
-        <p class="eyebrow">RACING PLAYABLE V6.6</p>
-        <h1>加速手感強化版</h1>
-        <p id="noticeText">這版保留強抓地力與 AI 平衡，並把加速反應調快；起跑與出彎補油會更有力，但極速仍維持約 320 km/h。</p>
+        <p class="eyebrow">RACING PLAYABLE V6.9</p>
+        <h1>手機橫式版面優化</h1>
+        <p id="noticeText">這版重整手機橫式版面：HUD、能量條、操作按鈕與設定畫面都重新排版，避免 Safari / 手機瀏覽器造成版面跑掉。</p>
         <div class="notice-tips">
-          <span>六種車色</span>
-          <span>加速更快</span>
-          <span>撞牆減速</span>
+          <span>橫式遊玩</span>
+          <span>手機版面修正</span>
+          <span>強化 AI</span>
         </div>
         <div class="setup-grid">
           <div>
@@ -84,6 +87,13 @@
     <section id="webglError" class="webgl-error" hidden>
       <strong>這台裝置目前無法啟動 WebGL。</strong>
       <span>請改用 Chrome / Safari 最新版，或確認瀏覽器沒有關閉硬體加速。</span>
+    </section>
+    <section id="orientationGate" class="orientation-gate" aria-live="polite">
+      <div class="rotate-card">
+        <div class="rotate-icon">↻</div>
+        <strong>請將手機轉成橫式遊玩</strong>
+        <span>橫式模式會自動套用完整賽車介面，避免按鈕與 HUD 跑版。</span>
+      </div>
     </section>
   </main>
 

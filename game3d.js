@@ -72,8 +72,8 @@
     sound: true,
     camera: 0,
     selectedCar: 0,
-    lapCount: Number(localStorage.getItem('racing-v6.5-laps') || 3),
-    carTotal: Number(localStorage.getItem('racing-v6.5-cars') || 6),
+    lapCount: Number(localStorage.getItem('racing-v6.9-laps') || localStorage.getItem('racing-v6.8-laps') || 3),
+    carTotal: Number(localStorage.getItem('racing-v6.9-cars') || localStorage.getItem('racing-v6.8-cars') || 6),
     rank: 1,
     currentLap: 1,
     lapProgress: 0,
@@ -355,7 +355,7 @@
   }
 
   function bestKey(laps = state.lapCount) {
-    return `racing-v6.4-best-${laps}-${state.carTotal}`;
+    return `racing-v6.8-best-${laps}-${state.carTotal}`;
   }
 
   function loadBestForLaps(laps = state.lapCount) {
@@ -474,14 +474,20 @@
         lane,
         speed: 0,
         distance: 0,
-        // V6.5：AI 保留挑戰性，但整體稍微降速；6 車模式仍保留一台王牌電腦。
-        ace: totalCars > 3 && i === totalCars - 1,
-        skill: totalCars > 3 && i === totalCars - 1
+        // V6.8：AI 再強化。最後一台是王牌，倒數第二台是勁敵，一般 AI 也更積極。
+        ace: totalCars >= 5 && i >= totalCars - 2,
+        champion: totalCars >= 5 && i === totalCars - 1,
+        rival: totalCars >= 5 && i === totalCars - 2,
+        skill: totalCars >= 5 && i === totalCars - 1
+          ? 1.27
+          : totalCars >= 5 && i === totalCars - 2
+            ? 1.22
+            : clamp(0.98 + tier * 0.12 + seededNoise(300 + i) * 0.06, 0.96, 1.12),
+        aggression: totalCars >= 5 && i === totalCars - 1
           ? 1.18
-          : clamp(0.94 + tier * 0.12 + seededNoise(300 + i) * 0.06, 0.92, 1.09),
-        aggression: totalCars > 3 && i === totalCars - 1
-          ? 1.08
-          : clamp(0.48 + tier * 0.30 + seededNoise(510 + i) * 0.16, 0.45, 0.92),
+          : totalCars >= 5 && i === totalCars - 2
+            ? 1.10
+            : clamp(0.54 + tier * 0.32 + seededNoise(510 + i) * 0.15, 0.52, 0.96),
         phase: seededNoise(420 + i) * Math.PI * 2,
         overtakeBias: seededNoise(620 + i) > 0.5 ? 1 : -1,
         finished: false,
@@ -498,8 +504,8 @@
 
       // 看更遠，提前為髮夾、窄路、盲坡煞車。
       const nearZ = ai.z + 18;
-      const futureZ = ai.z + 58;
-      const farZ = ai.z + 88;
+      const futureZ = ai.z + 68;
+      const farZ = ai.z + 108;
       const curveNear = Math.abs(roadCenter(nearZ) - roadCenter(ai.z)) / 22 + Math.abs(roadTangentYaw(nearZ)) * 1.05;
       const curveFuture = Math.abs(roadCenter(farZ) - roadCenter(nearZ)) / 34 + Math.abs(roadTangentYaw(futureZ)) * 1.25;
       const curveStrength = curveNear * 0.65 + curveFuture * 0.92;
@@ -514,31 +520,32 @@
       const gapToPlayer = player.z - ai.z;
       const playerLane = player.x - roadCenter(player.z);
       const canAttack = gapToPlayer > -22 && gapToPlayer < 96 && ai.speed >= state.speed * 0.86 && state.carTotal > 1;
-      const attackBoost = canAttack ? (ai.ace ? 6.8 : 4.4) * ai.aggression : 0;
-      const raceBreathing = Math.sin(state.raceTime * (0.92 + ai.aggression * 0.10) + ai.phase) * (ai.ace ? 1.8 : 1.25);
-      const startBoost = state.raceTime < 1.0 ? 0.78 : 1;
-      const base = (ai.ace ? 119.0 : 111.0) * ai.skill;
-      const curveBrake = curveStrength * (ai.ace ? 18.8 : 22.0 - ai.aggression * 2.2);
-      const target = clamp((base - curveBrake - narrowPenalty * (ai.ace ? 0.86 : 1.08) - hillPenalty * (ai.ace ? 0.90 : 1.08) + downhillBonus * 0.82 + attackBoost + raceBreathing) * startBoost, 60, ai.ace ? 152 : 140);
-      ai.speed = lerp(ai.speed, target, 1 - Math.pow(ai.ace ? 0.0068 : 0.0105, dt));
+      const aceScale = ai.champion ? 1.0 : ai.rival ? 0.82 : 0.0;
+      const attackBoost = canAttack ? (ai.ace ? (8.6 + aceScale * 1.8) : 5.8) * ai.aggression : 0;
+      const raceBreathing = Math.sin(state.raceTime * (1.02 + ai.aggression * 0.13) + ai.phase) * (ai.champion ? 2.15 : ai.rival ? 1.85 : 1.35);
+      const startBoost = state.raceTime < 1.0 ? 0.86 : 1;
+      const base = (ai.champion ? 124.5 : ai.rival ? 122.0 : 113.5) * ai.skill;
+      const curveBrake = curveStrength * (ai.champion ? 16.6 : ai.rival ? 17.2 : 20.2 - ai.aggression * 2.2);
+      const target = clamp((base - curveBrake - narrowPenalty * (ai.ace ? 0.76 : 0.98) - hillPenalty * (ai.ace ? 0.78 : 0.98) + downhillBonus * 0.96 + attackBoost + raceBreathing) * startBoost, 64, ai.champion ? 164 : ai.rival ? 158 : 146);
+      ai.speed = lerp(ai.speed, target, 1 - Math.pow(ai.champion ? 0.0048 : ai.rival ? 0.0058 : 0.0088, dt));
       ai.z += ai.speed * dt * 0.78;
       ai.distance = Math.max(0, ai.z - 6);
 
       // 理想線：彎前靠外、彎中切內，再加上超車偏移。
       const curveDir = Math.sign(roadCenter(futureZ) - roadCenter(ai.z + 4)) || Math.sign(roadTangentYaw(futureZ)) || 1;
-      const innerLane = -curveDir * (5.2 + ai.aggression * (ai.ace ? 1.55 : 1.10));
-      const setupLane = curveDir * (ai.ace ? 2.45 : 1.85) * smoothstep(0.12, 0.8, curveStrength);
+      const innerLane = -curveDir * (5.4 + ai.aggression * (ai.champion ? 1.85 : ai.rival ? 1.62 : 1.18));
+      const setupLane = curveDir * (ai.champion ? 2.85 : ai.rival ? 2.55 : 2.05) * smoothstep(0.10, 0.74, curveStrength);
       let overtakeLane = 0;
       if (canAttack) {
         const passSide = Math.abs(playerLane) > 2.5 ? -Math.sign(playerLane) : ai.overtakeBias;
-        overtakeLane = passSide * ((ai.ace ? 6.1 : 4.9) + ai.aggression * 1.55);
+        overtakeLane = passSide * ((ai.champion ? 7.0 : ai.rival ? 6.4 : 5.2) + ai.aggression * 1.70);
       }
-      const laneWave = Math.sin(ai.z * 0.021 + ai.phase) * (ai.ace ? 0.28 : 0.55 + (1.05 - ai.aggression) * 0.35);
-      const desiredLane = clamp(ai.lane * (ai.ace ? 0.14 : 0.22) + innerLane * (ai.ace ? 0.60 : 0.50) + setupLane + overtakeLane + laneWave, -widthNow * 0.38, widthNow * 0.38);
+      const laneWave = Math.sin(ai.z * 0.021 + ai.phase) * (ai.champion ? 0.18 : ai.rival ? 0.26 : 0.46 + (1.05 - ai.aggression) * 0.24);
+      const desiredLane = clamp(ai.lane * (ai.champion ? 0.09 : ai.rival ? 0.12 : 0.19) + innerLane * (ai.champion ? 0.68 : ai.rival ? 0.63 : 0.53) + setupLane + overtakeLane + laneWave, -widthNow * 0.405, widthNow * 0.405);
       const desiredX = roadCenter(ai.z) + desiredLane;
-      ai.x = lerp(ai.x, desiredX, 1 - Math.pow(0.0042, dt));
+      ai.x = lerp(ai.x, desiredX, 1 - Math.pow(ai.champion ? 0.0028 : ai.rival ? 0.0034 : 0.0048, dt));
       ai.y = roadHeight(ai.z) + 0.82;
-      ai.yaw = lerp(ai.yaw, roadTangentYaw(ai.z + 10) + (desiredX - ai.x) * 0.026, 1 - Math.pow(0.012, dt));
+      ai.yaw = lerp(ai.yaw, roadTangentYaw(ai.z + 12) + (desiredX - ai.x) * 0.032, 1 - Math.pow(0.009, dt));
 
       if (ai.distance >= totalRaceDistance) {
         ai.finished = true;
@@ -570,7 +577,7 @@
       UI.countdown.classList.remove('go');
       UI.countdown.textContent = '3';
     }
-    beep(360, 0.06, 'square', 0.045);
+    chord([280, 420], 0.08, 0.034);
   }
 
   function setRunning(next) {
@@ -596,26 +603,125 @@
   }
 
   let audioCtx = null;
-  function beep(freq = 220, dur = 0.05, type = 'sine', gain = 0.04) {
-    if (!state.sound) return;
+  let masterGain = null;
+  let engineOsc = null;
+  let engineSub = null;
+  let engineGain = null;
+  let musicTimer = 0;
+  let musicStep = 0;
+  const MUSIC_PATTERN = [0, 3, 7, 10, 7, 3, 5, 8, 12, 8, 5, 2, 0, 5, 7, 12];
+
+  function ensureAudio() {
     try {
       audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      osc.frequency.value = freq;
-      osc.type = type;
-      g.gain.setValueAtTime(gain, audioCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
-      osc.connect(g).connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + dur);
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      if (!masterGain) {
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.32;
+        masterGain.connect(audioCtx.destination);
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function tone(freq = 220, dur = 0.05, type = 'sine', gain = 0.04, delay = 0) {
+    if (!state.sound || !ensureAudio()) return;
+    const t = audioCtx.currentTime + delay;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.frequency.setValueAtTime(freq, t);
+    osc.type = type;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g).connect(masterGain);
+    osc.start(t);
+    osc.stop(t + dur + 0.02);
+  }
+
+  function beep(freq = 220, dur = 0.05, type = 'sine', gain = 0.04) {
+    tone(freq, dur, type, gain);
+    if (freq > 420) tone(freq * 1.5, dur * 0.72, 'triangle', gain * 0.34, 0.01);
+  }
+
+  function chord(freqs, dur = 0.12, gain = 0.035) {
+    freqs.forEach((freq, i) => tone(freq, dur + i * 0.018, i ? 'triangle' : 'square', gain * (i ? 0.58 : 1), i * 0.018));
+  }
+
+  function startEngineLoop() {
+    if (!state.sound || !ensureAudio() || engineOsc) return;
+    engineGain = audioCtx.createGain();
+    engineGain.gain.value = 0.0001;
+    engineGain.connect(masterGain);
+    engineOsc = audioCtx.createOscillator();
+    engineSub = audioCtx.createOscillator();
+    engineOsc.type = 'sawtooth';
+    engineSub.type = 'triangle';
+    engineOsc.frequency.value = 72;
+    engineSub.frequency.value = 36;
+    engineOsc.connect(engineGain);
+    engineSub.connect(engineGain);
+    engineOsc.start();
+    engineSub.start();
+  }
+
+  function stopEngineLoop() {
+    try {
+      if (engineOsc) engineOsc.stop();
+      if (engineSub) engineSub.stop();
     } catch (_) {}
+    engineOsc = null;
+    engineSub = null;
+    engineGain = null;
+  }
+
+  function updateAudio(dt) {
+    if (!state.sound) { stopEngineLoop(); return; }
+    if (!audioCtx || !masterGain) return;
+    if (audioCtx.state === 'suspended') return;
+    startEngineLoop();
+    const now = audioCtx.currentTime;
+    const moving = state.running || state.countingDown || state.goFlash > 0;
+    const speed01 = clamp(state.speed / 126, 0, 1);
+    if (engineGain && engineOsc && engineSub) {
+      const engineVolume = moving ? 0.020 + speed01 * 0.040 + (input.gas ? 0.012 : 0) : 0.0001;
+      engineGain.gain.setTargetAtTime(engineVolume, now, 0.055);
+      engineOsc.frequency.setTargetAtTime(58 + speed01 * 112 + (input.gas ? 12 : 0), now, 0.045);
+      engineSub.frequency.setTargetAtTime(29 + speed01 * 52, now, 0.06);
+    }
+
+    if (!state.running) return;
+    musicTimer -= dt;
+    if (musicTimer <= 0) {
+      const step = MUSIC_PATTERN[musicStep % MUSIC_PATTERN.length];
+      const base = 98;
+      const freq = base * Math.pow(2, step / 12);
+      tone(freq, 0.065, musicStep % 4 === 0 ? 'square' : 'triangle', 0.010 + speed01 * 0.006);
+      if (musicStep % 4 === 0) tone(base * 0.5, 0.09, 'sawtooth', 0.010);
+      if (state.boost > 18 && musicStep % 2 === 0) tone(freq * 2, 0.045, 'triangle', 0.007);
+      musicStep += 1;
+      musicTimer = state.boost > 18 ? 0.165 : 0.215;
+    }
+  }
+
+  function setViewportVars() {
+    const vv = window.visualViewport;
+    const h = Math.round((vv && vv.height) || window.innerHeight || document.documentElement.clientHeight || 0);
+    const w = Math.round((vv && vv.width) || window.innerWidth || document.documentElement.clientWidth || 0);
+    if (h > 0) document.documentElement.style.setProperty('--app-height', `${h}px`);
+    if (w > 0) document.documentElement.style.setProperty('--app-width', `${w}px`);
   }
 
   function resize() {
+    setViewportVars();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = Math.floor(canvas.clientWidth * dpr);
-    const h = Math.floor(canvas.clientHeight * dpr);
+    const rect = canvas.getBoundingClientRect();
+    const cssW = Math.max(1, rect.width || canvas.clientWidth || window.innerWidth);
+    const cssH = Math.max(1, rect.height || canvas.clientHeight || window.innerHeight);
+    const w = Math.floor(cssW * dpr);
+    const h = Math.floor(cssH * dpr);
     if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w;
       canvas.height = h;
@@ -636,9 +742,9 @@
         state.goFlash = 0.58;
         UI.startBtn.textContent = '暫停';
         if (UI.countdown) { UI.countdown.hidden = false; UI.countdown.classList.add('go'); UI.countdown.textContent = 'GO!'; }
-        beep(720, 0.08, 'square', 0.06);
+        chord([520, 780, 1040], 0.13, 0.050);
       } else if (Math.abs(state.countdown - Math.round(state.countdown)) < dt * 0.65) {
-        beep(360 + n * 45, 0.04, 'square', 0.035);
+        chord([280 + n * 52, 420 + n * 56], 0.075, 0.028);
       }
       state.speed = 0;
       return;
@@ -697,17 +803,8 @@
     if (Math.abs(laneOffset) > limit) {
       const side = Math.sign(laneOffset);
       car.x = roadC + side * limit;
-      car.lateral *= -0.06;
-
-      // V6.3：撞牆不扣血，但會明顯減速，避免貼牆硬衝比正常跑線更快。
-      if (state.crashedCooldown <= 0 && state.speed > 18) {
-        state.speed *= state.speed > 90 ? 0.68 : 0.78;
-        state.crashedCooldown = 0.28;
-        state.shake = 0.055;
-        beep(125, 0.045, 'sawtooth', 0.030);
-      } else {
-        state.speed *= Math.pow(0.982, dt * 60);
-      }
+      // V6.7：取消撞牆減速，只保留邊界推回，避免玩家被卡在護欄外。
+      car.lateral *= -0.035;
     }
 
     updateAICars(dt);
@@ -736,8 +833,8 @@
     UI.notice.classList.remove('hidden');
     UI.startBtn.textContent = '再跑一次';
     UI.noticeText.textContent = `完成 ${state.lapCount} 圈！成績 ${formatTime(state.raceTime)}，名次第 ${state.rank}/${state.carTotal}${isBest ? '，刷新最佳成績！' : `，最佳 ${formatTime(previousBest)}。`} 可調整圈數、車色或比賽車數再跑。`;
-    beep(isBest ? 820 : 620, 0.08, 'triangle', 0.055);
-    setTimeout(() => beep(isBest ? 1040 : 760, 0.09, 'triangle', 0.04), 100);
+    chord(isBest ? [620, 820, 1040] : [520, 660, 820], 0.18, 0.050);
+    setTimeout(() => chord(isBest ? [760, 980, 1240] : [440, 620, 760], 0.16, 0.038), 140);
   }
 
   function updateTraffic(dt) {
@@ -779,8 +876,7 @@
         g.taken = true;
         state.boost = clamp(state.boost + 35, 0, 100);
         spawnBoostParticles(car.x, car.z + 1, 14);
-        beep(520, 0.06, 'triangle', 0.05);
-        setTimeout(() => beep(750, 0.06, 'triangle', 0.035), 70);
+        chord([520, 750, 980], 0.11, 0.038);
       }
     }
   }
@@ -1131,6 +1227,7 @@
     const dt = Math.min(0.04, (now - (state.lastTime || now)) / 1000);
     state.lastTime = now;
     update(dt);
+    updateAudio(dt);
     render();
     updateUI();
 
@@ -1146,7 +1243,7 @@
   }
 
   function bindHoldButton(btn, prop) {
-    const down = (e) => { e.preventDefault(); input[prop] = true; btn.classList.add('is-down'); if (audioCtx?.state === 'suspended') audioCtx.resume(); };
+    const down = (e) => { e.preventDefault(); input[prop] = true; btn.classList.add('is-down'); ensureAudio(); };
     const up = (e) => { if (e) e.preventDefault(); input[prop] = false; btn.classList.remove('is-down'); };
     btn.addEventListener('pointerdown', down);
     btn.addEventListener('pointerup', up);
@@ -1160,14 +1257,15 @@
 
     UI.startBtn.addEventListener('click', () => {
       if (state.raceFinished || state.health <= 0) resetGame();
-      UI.noticeText.textContent = `V6.5：抓地力再加強、左右轉彎更穩；${state.lapCount} 圈、共 ${state.carTotal} 台車。AI 稍微減弱，但 6 車模式仍有王牌 AI，撞牆會減速。`;
+      UI.noticeText.textContent = `V6.9：手機橫式版面優化，HUD 與操作按鈕不再跑版；${state.lapCount} 圈、共 ${state.carTotal} 台車。6 車模式有兩台強敵 AI。`;
       setRunning(!(state.running || state.countingDown));
     });
     UI.resetBtn.addEventListener('click', resetGame);
     UI.soundBtn.addEventListener('click', () => {
       state.sound = !state.sound;
       UI.soundBtn.textContent = `音效：${state.sound ? '開' : '關'}`;
-      if (state.sound) beep(440, 0.04, 'triangle', 0.04);
+      if (state.sound) { ensureAudio(); chord([440, 660], 0.08, 0.030); }
+      else stopEngineLoop();
     });
     UI.cameraBtn.addEventListener('click', () => {
       state.camera = (state.camera + 1) % 2;
@@ -1187,7 +1285,7 @@
       btn.classList.toggle('active', laps === state.lapCount);
       btn.addEventListener('click', () => {
         state.lapCount = laps;
-        localStorage.setItem('racing-v6.5-laps', String(laps));
+        localStorage.setItem('racing-v6.9-laps', String(laps));
         UI.lapChoices.forEach((b) => b.classList.toggle('active', b === btn));
         resetGame();
         UI.noticeText.textContent = `已設定 ${laps} 圈比賽。現在共 ${state.carTotal} 台車，按「啟動」開始。`;
@@ -1200,12 +1298,12 @@
       btn.classList.toggle('active', cars === state.carTotal);
       btn.addEventListener('click', () => {
         state.carTotal = clamp(cars, 1, 6);
-        localStorage.setItem('racing-v6.5-cars', String(state.carTotal));
+        localStorage.setItem('racing-v6.9-cars', String(state.carTotal));
         UI.raceChoices.forEach((b) => b.classList.toggle('active', b === btn));
         resetGame();
         UI.noticeText.textContent = state.carTotal === 1
           ? `已切換單人練習。沒有電腦車，專心練路線。`
-          : `已切換 ${state.carTotal} 台車比賽。AI 已稍微降難度；6 車模式仍有王牌 AI。抓地力更強，不做撞車扣血，但撞牆會減速。`;
+          : `已切換 ${state.carTotal} 台車比賽。6 車模式會有兩台強敵 AI；取消撞牆減速，過彎可以更專心。`;
         beep(380 + state.carTotal * 35, 0.045, 'triangle', 0.035);
       });
     });
@@ -1250,6 +1348,8 @@
     canvas.addEventListener('pointercancel', endPointer);
 
     window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', () => setTimeout(resize, 220));
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) setRunning(false);
     });
