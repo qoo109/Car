@@ -20,6 +20,14 @@
     raceChoices: Array.from(document.querySelectorAll('.race-choice'))
   };
 
+  function updateOrientationClass() {
+    const w = window.innerWidth || document.documentElement.clientWidth || 0;
+    const h = window.innerHeight || document.documentElement.clientHeight || 0;
+    const portrait = h > w && w <= 820;
+    document.documentElement.classList.toggle('is-portrait-mobile', portrait);
+    document.documentElement.classList.toggle('is-landscape-mobile', !portrait && h <= 520 && w <= 980);
+  }
+
   const CAR_SKINS = [
     { name: '白色', body: [0.94, 0.91, 0.78], stripe: [0.12, 0.13, 0.14], glass: [0.08, 0.16, 0.22], max: 126, accel: 74, grip: 1.00 },
     { name: '黃色', body: [1.00, 0.67, 0.08], stripe: [0.95, 0.16, 0.09], glass: [0.08, 0.12, 0.18], max: 126, accel: 74, grip: 1.00 },
@@ -72,8 +80,8 @@
     sound: true,
     camera: 0,
     selectedCar: 0,
-    lapCount: Number(localStorage.getItem('racing-v6.9-laps') || localStorage.getItem('racing-v6.8-laps') || 3),
-    carTotal: Number(localStorage.getItem('racing-v6.9-cars') || localStorage.getItem('racing-v6.8-cars') || 6),
+    lapCount: Number(localStorage.getItem('racing-v7.0-laps') || localStorage.getItem('racing-v6.9-laps') || localStorage.getItem('racing-v6.8-laps') || 3),
+    carTotal: Number(localStorage.getItem('racing-v7.0-cars') || localStorage.getItem('racing-v6.9-cars') || localStorage.getItem('racing-v6.8-cars') || 6),
     rank: 1,
     currentLap: 1,
     lapProgress: 0,
@@ -716,6 +724,7 @@
 
   function resize() {
     setViewportVars();
+    updateOrientationClass();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const rect = canvas.getBoundingClientRect();
     const cssW = Math.max(1, rect.width || canvas.clientWidth || window.innerWidth);
@@ -1257,7 +1266,7 @@
 
     UI.startBtn.addEventListener('click', () => {
       if (state.raceFinished || state.health <= 0) resetGame();
-      UI.noticeText.textContent = `V6.9：手機橫式版面優化，HUD 與操作按鈕不再跑版；${state.lapCount} 圈、共 ${state.carTotal} 台車。6 車模式有兩台強敵 AI。`;
+      UI.noticeText.textContent = `V7.0：直式只顯示旋轉提示，橫式版面重新壓縮；${state.lapCount} 圈、共 ${state.carTotal} 台車。6 車模式有兩台強敵 AI。`;
       setRunning(!(state.running || state.countingDown));
     });
     UI.resetBtn.addEventListener('click', resetGame);
@@ -1285,7 +1294,7 @@
       btn.classList.toggle('active', laps === state.lapCount);
       btn.addEventListener('click', () => {
         state.lapCount = laps;
-        localStorage.setItem('racing-v6.9-laps', String(laps));
+        localStorage.setItem('racing-v7.0-laps', String(laps));
         UI.lapChoices.forEach((b) => b.classList.toggle('active', b === btn));
         resetGame();
         UI.noticeText.textContent = `已設定 ${laps} 圈比賽。現在共 ${state.carTotal} 台車，按「啟動」開始。`;
@@ -1298,7 +1307,7 @@
       btn.classList.toggle('active', cars === state.carTotal);
       btn.addEventListener('click', () => {
         state.carTotal = clamp(cars, 1, 6);
-        localStorage.setItem('racing-v6.9-cars', String(state.carTotal));
+        localStorage.setItem('racing-v7.0-cars', String(state.carTotal));
         UI.raceChoices.forEach((b) => b.classList.toggle('active', b === btn));
         resetGame();
         UI.noticeText.textContent = state.carTotal === 1
@@ -1348,13 +1357,14 @@
     canvas.addEventListener('pointercancel', endPointer);
 
     window.addEventListener('resize', resize);
-    window.addEventListener('orientationchange', () => setTimeout(resize, 220));
+    window.addEventListener('orientationchange', () => { updateOrientationClass(); setTimeout(resize, 120); setTimeout(resize, 420); });
     if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) setRunning(false);
     });
   }
 
+  updateOrientationClass();
   bindInput();
   resetGame();
   requestAnimationFrame(frame);

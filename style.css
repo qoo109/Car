@@ -382,3 +382,152 @@ body {
 @media (min-width: 821px), (orientation: landscape) {
   .orientation-gate { display: none !important; }
 }
+
+
+/* V7.0 強制修正：手機直式不顯示設定大面板，只顯示橫式提示 */
+html.is-portrait-mobile,
+html.is-portrait-mobile body {
+  overflow: hidden !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+}
+
+html.is-portrait-mobile .notice,
+html.is-portrait-mobile .top-hud,
+html.is-portrait-mobile .status-row,
+html.is-portrait-mobile .controls,
+html.is-portrait-mobile .bottom-actions,
+html.is-portrait-mobile .countdown {
+  display: none !important;
+}
+
+html.is-portrait-mobile .orientation-gate {
+  position: absolute !important;
+  z-index: 999 !important;
+  inset: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: max(22px, env(safe-area-inset-top)) 22px max(22px, env(safe-area-inset-bottom)) 22px !important;
+  background: radial-gradient(circle at 50% 22%, rgba(80,180,255,.24), rgba(4,10,20,.94) 58%, #000 100%) !important;
+  pointer-events: auto !important;
+}
+
+html.is-portrait-mobile .rotate-card {
+  width: min(360px, calc(100vw - 38px));
+  padding: 26px 22px;
+  border-radius: 24px;
+}
+
+html.is-portrait-mobile #gameCanvas {
+  filter: blur(2px) brightness(.52);
+}
+
+@media (orientation: portrait) and (max-width: 820px) {
+  .notice,
+  .top-hud,
+  .status-row,
+  .controls,
+  .bottom-actions,
+  .countdown {
+    display: none !important;
+  }
+
+  .orientation-gate {
+    position: absolute !important;
+    z-index: 999 !important;
+    inset: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: max(22px, env(safe-area-inset-top)) 22px max(22px, env(safe-area-inset-bottom)) 22px !important;
+    background: radial-gradient(circle at 50% 22%, rgba(80,180,255,.24), rgba(4,10,20,.94) 58%, #000 100%) !important;
+    pointer-events: auto !important;
+  }
+
+  .rotate-card {
+    width: min(360px, calc(100vw - 38px));
+    padding: 26px 22px;
+    border-radius: 24px;
+  }
+
+  #gameCanvas {
+    filter: blur(2px) brightness(.52);
+  }
+}
+
+/* V7.0 橫式手機設定卡片更扁、更像遊戲開始選單 */
+@media (orientation: landscape) and (max-height: 520px) {
+  .notice-card {
+    width: min(1030px, calc(100vw - 18px - var(--safe-left) - var(--safe-right))) !important;
+    max-height: calc(var(--app-height) - 14px - var(--safe-top) - var(--safe-bottom)) !important;
+    padding: 10px 13px 11px !important;
+    border-radius: 18px !important;
+    text-align: left !important;
+  }
+
+  .notice-card .eyebrow,
+  .notice-card h1,
+  .notice-card p:not(.eyebrow),
+  .notice-tips { text-align: center; }
+
+  .notice-card p:not(.eyebrow) {
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+    margin-top: 5px !important;
+  }
+
+  .notice-tips {
+    margin: 7px 0 7px !important;
+  }
+
+  .notice-tips span {
+    font-size: 10px !important;
+    padding: 4px 7px !important;
+  }
+
+  .setup-grid {
+    grid-template-columns: minmax(310px, 1.45fr) minmax(160px, .72fr) minmax(160px, .72fr) !important;
+    gap: 8px !important;
+  }
+
+  .garage {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .car-choice,
+  .lap-choice,
+  .race-choice {
+    min-height: 0 !important;
+    padding: 7px 5px !important;
+    border-radius: 12px !important;
+  }
+
+  .swatch {
+    width: 32px !important;
+    height: 16px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .car-choice span,
+  .lap-choice,
+  .race-choice {
+    font-size: 11px !important;
+  }
+
+  .lap-choice small,
+  .race-choice small {
+    display: none !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 390px) {
+  .notice-card p:not(.eyebrow),
+  .notice-tips {
+    display: none !important;
+  }
+  .eyebrow { font-size: 9px !important; }
+  h1 { font-size: clamp(20px, 4vw, 28px) !important; }
+  .setup-grid h2 { margin-bottom: 5px !important; font-size: 11px !important; }
+  .garage { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+  .car-choice, .lap-choice, .race-choice { padding: 6px 4px !important; }
+}
