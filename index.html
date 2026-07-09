@@ -1,65 +1,92 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
+<!doctype html>
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-  <title>Neon Racer City Chase V12</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#07111f" />
+  <title>全 3D 模型車高空賽道 V6.6</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <canvas id="game"></canvas>
+  <main class="game-shell">
+    <canvas id="gameCanvas" aria-label="全 3D 賽車遊戲畫面"></canvas>
 
-  <div id="orientationHint">建議橫向遊玩，視角與按鈕體驗更好</div>
+    <section class="hud top-hud" aria-label="比賽資訊">
+      <div class="stat"><span class="label">速度</span><strong><span id="speedText">0</span><small> km/h</small></strong></div>
+      <div class="stat"><span class="label">名次</span><strong id="rankText">1/6</strong></div>
+      <div class="stat"><span class="label">圈數</span><strong id="lapText">1/3</strong></div>
+      <div class="stat"><span class="label">進度</span><strong id="progressText">0%</strong></div>
+      <div class="stat"><span class="label">時間</span><strong id="timeText">0:00.0</strong></div>
+      <div class="stat"><span class="label">最佳</span><strong id="bestText">--</strong></div>
+    </section>
 
-  <div id="topLeftPanel" class="glass">
-    <div class="settingRow"><span>GRIP</span><b>ON</b></div>
-    <div class="settingRow"><span>ABS</span><b>ON</b></div>
-    <div class="settingRow"><span>ESP</span><b>ON</b></div>
-  </div>
+    <section class="status-row boost-only" aria-label="能量">
+      <div class="meter-wrap"><span>能量</span><div class="meter boost"><i id="boostBar"></i></div></div>
+    </section>
 
-  <div id="hud" class="glass">
-    <div class="logo">CITY CHASE V12</div>
-    <div>速度：<span id="speed">0</span> km/h</div>
-    <div>里程：<span id="distance">0</span> m</div>
-    <div>排名：<span id="rank">1</span> / 4</div>
-    <div>狀態：<span id="stateText">待機</span></div>
-  </div>
-
-  <div id="speedometer" class="glassLite">
-    <canvas id="meter" width="170" height="170"></canvas>
-  </div>
-
-  <div id="cornerTools">
-    <button id="fullscreenBtn" class="toolBtn" aria-label="全螢幕">⛶</button>
-  </div>
-
-  <div id="controls">
-    <div id="leftControls">
-      <button class="roundBtn" id="leftBtn" aria-label="左轉">◀</button>
-      <button class="roundBtn" id="rightBtn" aria-label="右轉">▶</button>
-    </div>
-
-    <div id="rightControls">
-      <button class="pedalBtn brake" id="brakeBtn" aria-label="煞車">煞車</button>
-      <button class="pedalBtn gas" id="gasBtn" aria-label="加速">加速</button>
-    </div>
-  </div>
-
-  <div id="start">
-    <div class="startPanel">
-      <h1>NEON RACER</h1>
-      <h2>V12 城市追車視角強化版</h2>
-      <p>
-        已強化：<b>追尾視角</b>、<b>速度感與鏡頭震動</b>、<b>火焰與車身傾斜</b>、<b>城市夜景與路燈光暈</b>、<b>手機控制與全螢幕體驗</b>。
-      </p>
-      <div class="startActions">
-        <button id="startBtn">啟動遊戲</button>
-        <button id="fullscreenStartBtn" class="secondaryBtn">全螢幕</button>
+    <section id="notice" class="notice">
+      <div class="notice-card">
+        <p class="eyebrow">RACING PLAYABLE V6.6</p>
+        <h1>加速手感強化版</h1>
+        <p id="noticeText">這版保留強抓地力與 AI 平衡，並把加速反應調快；起跑與出彎補油會更有力，但極速仍維持約 320 km/h。</p>
+        <div class="notice-tips">
+          <span>六種車色</span>
+          <span>加速更快</span>
+          <span>撞牆減速</span>
+        </div>
+        <div class="setup-grid">
+          <div>
+            <h2>選擇車色</h2>
+            <div class="garage" aria-label="選擇車色">
+              <button class="car-choice active" data-car="0" type="button"><i class="swatch classic"></i><span>白色</span></button>
+              <button class="car-choice" data-car="1" type="button"><i class="swatch sport"></i><span>黃色</span></button>
+              <button class="car-choice" data-car="2" type="button"><i class="swatch blue"></i><span>藍色</span></button>
+              <button class="car-choice" data-car="3" type="button"><i class="swatch black"></i><span>黑色</span></button>
+              <button class="car-choice" data-car="4" type="button"><i class="swatch red"></i><span>紅色</span></button>
+              <button class="car-choice" data-car="5" type="button"><i class="swatch green"></i><span>綠色</span></button>
+            </div>
+          </div>
+          <div>
+            <h2>比賽圈數</h2>
+            <div class="lap-select" aria-label="選擇比賽圈數">
+              <button class="lap-choice" data-laps="1" type="button">1 圈<small>快速測試</small></button>
+              <button class="lap-choice active" data-laps="3" type="button">3 圈<small>標準賽</small></button>
+              <button class="lap-choice" data-laps="5" type="button">5 圈<small>耐力賽</small></button>
+            </div>
+          </div>
+          <div>
+            <h2>比賽車數</h2>
+            <div class="race-select" aria-label="選擇比賽車數">
+              <button class="race-choice" data-cars="1" type="button">單人<small>練習</small></button>
+              <button class="race-choice" data-cars="3" type="button">3 台<small>小型賽</small></button>
+              <button class="race-choice active" data-cars="6" type="button">6 台<small>完整對戰</small></button>
+            </div>
+          </div>
+        </div>
       </div>
-      <p class="small">手機建議橫向｜電腦可用方向鍵操作</p>
-    </div>
-  </div>
+    </section>
 
-  <script src="app.js"></script>
+    <section id="countdown" class="countdown" hidden aria-live="polite">3</section>
+
+    <section class="controls" aria-label="遊戲操作">
+      <button id="startBtn" class="control primary" type="button">啟動</button>
+      <button id="brakeBtn" class="control brake" type="button">煞車</button>
+      <button id="gasBtn" class="control gas" type="button">加速</button>
+    </section>
+
+    <section class="bottom-actions" aria-label="其他功能">
+      <button id="resetBtn" type="button">重置</button>
+      <button id="cameraBtn" type="button">視角：追尾</button>
+      <button id="soundBtn" type="button">音效：開</button>
+      <span id="fpsText">WebGL 3D</span>
+    </section>
+
+    <section id="webglError" class="webgl-error" hidden>
+      <strong>這台裝置目前無法啟動 WebGL。</strong>
+      <span>請改用 Chrome / Safari 最新版，或確認瀏覽器沒有關閉硬體加速。</span>
+    </section>
+  </main>
+
+  <script src="js/game3d.js"></script>
 </body>
 </html>
