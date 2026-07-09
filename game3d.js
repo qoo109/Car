@@ -579,7 +579,7 @@
     state.countdown = 3.15;
     state.goFlash = 0;
     UI.notice.classList.add('hidden');
-    UI.startBtn.textContent = '倒數中';
+    UI.startBtn.textContent = '倒數';
     if (UI.countdown) {
       UI.countdown.hidden = false;
       UI.countdown.classList.remove('go');
@@ -1266,7 +1266,7 @@
 
     UI.startBtn.addEventListener('click', () => {
       if (state.raceFinished || state.health <= 0) resetGame();
-      UI.noticeText.textContent = `V7.0：直式只顯示旋轉提示，橫式版面重新壓縮；${state.lapCount} 圈、共 ${state.carTotal} 台車。6 車模式有兩台強敵 AI。`;
+      UI.noticeText.textContent = `V7.1：橫式實戰 HUD 已壓縮，Safari 工具列出現時也較穩；${state.lapCount} 圈、共 ${state.carTotal} 台車。6 車模式有兩台強敵 AI。`;
       setRunning(!(state.running || state.countingDown));
     });
     UI.resetBtn.addEventListener('click', resetGame);
@@ -1294,7 +1294,7 @@
       btn.classList.toggle('active', laps === state.lapCount);
       btn.addEventListener('click', () => {
         state.lapCount = laps;
-        localStorage.setItem('racing-v7.0-laps', String(laps));
+        localStorage.setItem('racing-v7.1-laps', String(laps));
         UI.lapChoices.forEach((b) => b.classList.toggle('active', b === btn));
         resetGame();
         UI.noticeText.textContent = `已設定 ${laps} 圈比賽。現在共 ${state.carTotal} 台車，按「啟動」開始。`;
@@ -1307,7 +1307,7 @@
       btn.classList.toggle('active', cars === state.carTotal);
       btn.addEventListener('click', () => {
         state.carTotal = clamp(cars, 1, 6);
-        localStorage.setItem('racing-v7.0-cars', String(state.carTotal));
+        localStorage.setItem('racing-v7.1-cars', String(state.carTotal));
         UI.raceChoices.forEach((b) => b.classList.toggle('active', b === btn));
         resetGame();
         UI.noticeText.textContent = state.carTotal === 1

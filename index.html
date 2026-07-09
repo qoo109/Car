@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="screen-orientation" content="landscape" />
-  <title>全 3D 模型車高空賽道 V7.0</title>
+  <title>全 3D 模型車高空賽道 V7.1</title>
 
   <script>
     (function(){
@@ -15,12 +15,16 @@
         var w = window.innerWidth || document.documentElement.clientWidth || 0;
         var h = window.innerHeight || document.documentElement.clientHeight || 0;
         var portrait = h > w && w <= 820;
+        document.documentElement.style.setProperty('--app-height', h + 'px');
         document.documentElement.classList.toggle('is-portrait-mobile', portrait);
-        document.documentElement.classList.toggle('is-landscape-mobile', !portrait && h <= 520 && w <= 980);
+        document.documentElement.classList.toggle('is-landscape-mobile', !portrait && h <= 560 && w <= 1180);
       }
+      function nudgeSafari(){ try { window.scrollTo(0, 1); } catch(e) {} }
       apply();
+      nudgeSafari();
       window.addEventListener('resize', apply, {passive:true});
-      window.addEventListener('orientationchange', function(){ setTimeout(apply, 80); }, {passive:true});
+      window.addEventListener('orientationchange', function(){ setTimeout(apply, 80); setTimeout(nudgeSafari, 160); }, {passive:true});
+      window.addEventListener('touchstart', nudgeSafari, {passive:true, once:false});
     })();
   </script>
   <link rel="stylesheet" href="style.css" />
@@ -44,12 +48,12 @@
 
     <section id="notice" class="notice">
       <div class="notice-card">
-        <p class="eyebrow">RACING PLAYABLE V7.0</p>
-        <h1>手機橫式修正版</h1>
-        <p id="noticeText">這版針對手機重新整理：直式只顯示旋轉提示，橫式才進入設定與遊玩畫面，避免 Safari 工具列造成版面跑掉。</p>
+        <p class="eyebrow">RACING PLAYABLE V7.1</p>
+        <h1>橫式實戰 HUD 版</h1>
+        <p id="noticeText">這版把手機橫式 HUD、倒數、底部按鈕重新壓縮，Safari 工具列出現時也比較不會擋住賽道。</p>
         <div class="notice-tips">
-          <span>橫式遊玩</span>
-          <span>直式旋轉提示</span>
+          <span>橫式專用</span>
+          <span>實戰 HUD</span>
           <span>強化 AI</span>
         </div>
         <div class="setup-grid">
