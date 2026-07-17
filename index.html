@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="screen-orientation" content="landscape" />
-  <title>NEON TOY CIRCUIT｜六賽道 V8.9</title>
+  <title>NEON TOY CIRCUIT｜THREE.JS GLTF V9.0</title>
   <script>
     (function(){
       function apply(){
@@ -25,13 +25,21 @@
       window.addEventListener('touchstart',nudgeSafari,{passive:true,once:false});
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=8.9" />
-  <link rel="stylesheet" href="ui-v8.css?v=8.9" />
-  <link rel="stylesheet" href="v8.3-fx.css?v=8.9" />
-  <link rel="stylesheet" href="v8.4-race.css?v=8.9" />
-  <link rel="stylesheet" href="v8.5-pro.css?v=8.9" />
-  <link rel="stylesheet" href="v8.6-world.css?v=8.9" />
-  <link rel="stylesheet" href="v8.8-tracks.css?v=8.9" />
+  <link rel="stylesheet" href="style.css?v=9.0" />
+  <link rel="stylesheet" href="ui-v8.css?v=9.0" />
+  <link rel="stylesheet" href="v8.3-fx.css?v=9.0" />
+  <link rel="stylesheet" href="v8.4-race.css?v=9.0" />
+  <link rel="stylesheet" href="v8.5-pro.css?v=9.0" />
+  <link rel="stylesheet" href="v8.6-world.css?v=9.0" />
+  <link rel="stylesheet" href="v8.8-tracks.css?v=9.0" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 <body>
   <main class="game-shell">
@@ -48,13 +56,13 @@
     <div id="trackZoneBadge" class="track-zone-badge" aria-live="polite"><b>維修直線</b><small>PIT STRAIGHT</small></div>
     <div id="curveWarning" class="curve-warning" aria-live="polite"><span><b>右彎</b><small>彎道接近</small></span></div>
     <div id="proximityBadge" class="proximity-badge" aria-live="polite"><i></i><span>前方車輛 <b>30m</b></span></div>
-    <div id="raceToast" class="race-toast" aria-live="polite">V8.9 參考圖車模重製啟動</div>
+    <div id="raceToast" class="race-toast" aria-live="polite">V9.0 THREE.JS · GLTF 車模啟動</div>
     <div id="raceEventFeed" class="race-event-feed" aria-live="polite">準備出發</div>
     <div id="sectorPanel" class="sector-panel" aria-live="polite"><div><span id="sectorName">區段 1</span><strong id="sectorTime">0.00s</strong></div></div>
 
     <div class="race-brand" aria-hidden="true">
       <span class="race-brand-mark"><i></i></span>
-      <span class="race-brand-copy"><strong>NEON TOY CIRCUIT</strong><small>SIX TRACK CHAMPIONSHIP · V8.9</small></span>
+      <span class="race-brand-copy"><strong>NEON TOY CIRCUIT</strong><small>THREE.JS · GLTF RACING · V9.0</small></span>
     </div>
 
     <section class="hud top-hud" aria-label="比賽資訊">
@@ -86,10 +94,10 @@
     <section id="notice" class="notice">
       <div class="notice-card">
         <div class="menu-heading">
-          <div class="menu-copy"><p class="eyebrow">NEON TOY CIRCUIT · REFERENCE CAR MODEL V8.9</p><h1>六賽道高空錦標賽</h1><p id="noticeText">V8.9 依參考圖片重製玩家與 AI 的 3D 車模：專用斜面車身、低多邊形掀背輪廓、圓柱大輪胎、雙白賽車條紋、寬體輪拱、矩形燈組與大型尾翼。AI 車距與六條賽道完整保留。</p></div>
+          <div class="menu-copy"><p class="eyebrow">NEON TOY CIRCUIT · THREE.JS GLTF UPDATE V9.0</p><h1>六賽道高空錦標賽</h1><p id="noticeText">V9.0 正式導入 Three.js r184 與 GLTFLoader，玩家和 AI 改用獨立 glTF 2.0 低多邊形拉力車模；原本賽道、操控、AI 車距、天候、幽靈與錦標賽系統全部保留。</p></div>
           <div class="track-preview" aria-hidden="true"><i class="preview-car one"></i><i class="preview-car two"></i><i class="preview-car three"></i></div>
         </div>
-        <div class="notice-tips"><span>專用斜面 3D 車身</span><span>圓柱輪胎與雙白條</span><span>玩家／AI 全面重製</span></div>
+        <div class="notice-tips"><span>Three.js r184</span><span>glTF 2.0 車模</span><span>玩家／AI 全面替換</span></div>
         <div class="setup-grid">
           <div><h2>選擇車色與車型</h2><div class="garage" aria-label="選擇車色">
             <button class="car-choice active" data-car="0" type="button"><i class="swatch classic"></i><span>白色</span></button><button class="car-choice" data-car="1" type="button"><i class="swatch sport"></i><span>黃色</span></button><button class="car-choice" data-car="2" type="button"><i class="swatch blue"></i><span>藍色</span></button><button class="car-choice" data-car="3" type="button"><i class="swatch black"></i><span>黑色</span></button><button class="car-choice" data-car="4" type="button"><i class="swatch red"></i><span>紅色</span></button><button class="car-choice" data-car="5" type="button"><i class="swatch green"></i><span>綠色</span></button>
@@ -111,16 +119,17 @@
     <section id="orientationGate" class="orientation-gate" aria-live="polite"><div class="rotate-card"><div class="rotate-icon">↻</div><strong>請將手機轉成橫式遊玩</strong><span>目前偵測到直式畫面。轉橫後才會顯示設定、HUD 與操作按鈕。iPhone 建議先關閉直向鎖定。</span></div></section>
   </main>
 
-  <script src="js/v8.6-sunny-hook.js?v=8.9"></script>
-  <script src="js/v8.9-reference-car-model.js?v=8.9"></script>
-  <script src="js/v8.8.1-ai-separation.js?v=8.9"></script>
-  <script src="js/game3d.js?v=8.9"></script>
-  <script src="js/ui-v8.1.js?v=8.9"></script>
-  <script src="js/v8.3-fx.js?v=8.9"></script>
-  <script src="js/v8.4-race.js?v=8.9"></script>
-  <script src="js/v8.5-pro.js?v=8.9"></script>
-  <script src="js/v8.5.1-sunny-start.js?v=8.9"></script>
-  <script src="js/v8.6-race-modes.js?v=8.9"></script>
-  <script src="js/v8.8-tracks.js?v=8.9"></script>
+  <script src="js/v8.6-sunny-hook.js?v=9.0"></script>
+  <script src="js/v9-three-capture.js?v=9.0"></script>
+  <script src="js/v8.8.1-ai-separation.js?v=9.0"></script>
+  <script src="js/game3d.js?v=9.0"></script>
+  <script src="js/ui-v8.1.js?v=9.0"></script>
+  <script src="js/v8.3-fx.js?v=9.0"></script>
+  <script src="js/v8.4-race.js?v=9.0"></script>
+  <script src="js/v8.5-pro.js?v=9.0"></script>
+  <script src="js/v8.5.1-sunny-start.js?v=9.0"></script>
+  <script src="js/v8.6-race-modes.js?v=9.0"></script>
+  <script src="js/v8.8-tracks.js?v=9.0"></script>
+  <script type="module" src="js/v9-three-cars.js?v=9.0"></script>
 </body>
 </html>
