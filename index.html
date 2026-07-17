@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="screen-orientation" content="landscape" />
-  <title>NEON TOY CIRCUIT｜高空賽道 V8.6</title>
+  <title>NEON TOY CIRCUIT｜高空賽道 V8.7</title>
   <script>
     (function(){
       function apply(){
@@ -26,12 +26,13 @@
       window.addEventListener('touchstart', nudgeSafari, {passive:true, once:false});
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=8.6" />
-  <link rel="stylesheet" href="ui-v8.css?v=8.6" />
-  <link rel="stylesheet" href="v8.3-fx.css?v=8.6" />
-  <link rel="stylesheet" href="v8.4-race.css?v=8.6" />
-  <link rel="stylesheet" href="v8.5-pro.css?v=8.6" />
-  <link rel="stylesheet" href="v8.6-world.css?v=8.6" />
+  <link rel="stylesheet" href="style.css?v=8.7" />
+  <link rel="stylesheet" href="ui-v8.css?v=8.7" />
+  <link rel="stylesheet" href="v8.3-fx.css?v=8.7" />
+  <link rel="stylesheet" href="v8.4-race.css?v=8.7" />
+  <link rel="stylesheet" href="v8.5-pro.css?v=8.7" />
+  <link rel="stylesheet" href="v8.6-world.css?v=8.7" />
+  <link rel="stylesheet" href="v8.7-ghost-route.css?v=8.7" />
 </head>
 <body>
   <main class="game-shell">
@@ -48,13 +49,13 @@
     <div id="trackZoneBadge" class="track-zone-badge" aria-live="polite"><b>維修直線</b><small>PIT STRAIGHT</small></div>
     <div id="curveWarning" class="curve-warning" aria-live="polite"><span><b>右彎</b><small>彎道接近</small></span></div>
     <div id="proximityBadge" class="proximity-badge" aria-live="polite"><i></i><span>前方車輛 <b>30m</b></span></div>
-    <div id="raceToast" class="race-toast" aria-live="polite">V8.6 晴朗世界與競速模式啟動</div>
+    <div id="raceToast" class="race-toast" aria-live="polite">V8.7 3D 幽靈與鏡像賽道啟動</div>
     <div id="raceEventFeed" class="race-event-feed" aria-live="polite">準備出發</div>
     <div id="sectorPanel" class="sector-panel" aria-live="polite"><div><span id="sectorName">區段 1</span><strong id="sectorTime">0.00s</strong></div></div>
 
     <div class="race-brand" aria-hidden="true">
       <span class="race-brand-mark"><i></i></span>
-      <span class="race-brand-copy"><strong>NEON TOY CIRCUIT</strong><small>SKYWAY GRAND PRIX · V8.6</small></span>
+      <span class="race-brand-copy"><strong>NEON TOY CIRCUIT</strong><small>SKYWAY GRAND PRIX · V8.7</small></span>
     </div>
 
     <section class="hud top-hud" aria-label="比賽資訊">
@@ -108,18 +109,18 @@
       <div class="notice-card">
         <div class="menu-heading">
           <div class="menu-copy">
-            <p class="eyebrow">NEON TOY CIRCUIT · WORLD UPDATE V8.6</p>
-            <h1>晴空高架錦標賽</h1>
-            <p id="noticeText">V8.6 更新：真正明亮的晴朗天空與日光、車輛接觸減速、最佳跑法幽靈車，以及可開關的三戰錦標賽積分。車庫改裝維持不變。</p>
+            <p class="eyebrow">NEON TOY CIRCUIT · GHOST ROUTE V8.7</p>
+            <h1>晴空雙向錦標賽</h1>
+            <p id="noticeText">V8.7 更新：半透明 3D 幽靈車會在賽道前方重現最佳跑法；新增正向與鏡像兩種路線，鏡像模式會同步反轉觸控、方向盤與鍵盤轉向。</p>
           </div>
           <div class="track-preview" aria-hidden="true">
             <i class="preview-car one"></i><i class="preview-car two"></i><i class="preview-car three"></i>
           </div>
         </div>
         <div class="notice-tips">
-          <span>明亮晴空與白雲</span>
-          <span>碰撞減速回饋</span>
-          <span>幽靈車／錦標賽</span>
+          <span>半透明 3D 幽靈車</span>
+          <span>正向／鏡像賽道</span>
+          <span>錦標賽與碰撞保留</span>
         </div>
         <div class="setup-grid">
           <div>
@@ -189,13 +190,14 @@
     </section>
   </main>
 
-  <script src="js/v8.6-sunny-hook.js?v=8.6"></script>
-  <script src="js/game3d.js?v=8.6"></script>
-  <script src="js/ui-v8.1.js?v=8.6"></script>
-  <script src="js/v8.3-fx.js?v=8.6"></script>
-  <script src="js/v8.4-race.js?v=8.6"></script>
-  <script src="js/v8.5-pro.js?v=8.6"></script>
-  <script src="js/v8.5.1-sunny-start.js?v=8.6"></script>
-  <script src="js/v8.6-race-modes.js?v=8.6"></script>
+  <script src="js/v8.6-sunny-hook.js?v=8.7"></script>
+  <script src="js/game3d.js?v=8.7"></script>
+  <script src="js/ui-v8.1.js?v=8.7"></script>
+  <script src="js/v8.3-fx.js?v=8.7"></script>
+  <script src="js/v8.4-race.js?v=8.7"></script>
+  <script src="js/v8.5-pro.js?v=8.7"></script>
+  <script src="js/v8.5.1-sunny-start.js?v=8.7"></script>
+  <script src="js/v8.6-race-modes.js?v=8.7"></script>
+  <script src="js/v8.7-ghost-route.js?v=8.7"></script>
 </body>
 </html>
