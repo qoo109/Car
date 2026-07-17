@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#292936" />
+  <meta name="theme-color" content="#171326" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="screen-orientation" content="landscape" />
-  <title>TOY TRACK GP｜高空賽道 V8.0</title>
+  <title>NEON TOY CIRCUIT｜高空賽道 V8.1</title>
 
   <script>
     (function(){
@@ -33,40 +33,82 @@
 <body>
   <main class="game-shell">
     <canvas id="gameCanvas" aria-label="全 3D 賽車遊戲畫面"></canvas>
+    <div class="screen-vignette" aria-hidden="true"></div>
 
     <div class="race-brand" aria-hidden="true">
-      <span class="race-brand-mark"></span>
-      <span class="race-brand-copy"><strong>TOY TRACK GP</strong><small>MODULAR SKY CIRCUIT</small></span>
+      <span class="race-brand-mark"><i></i></span>
+      <span class="race-brand-copy"><strong>NEON TOY CIRCUIT</strong><small>SKYWAY GRAND PRIX</small></span>
     </div>
 
     <section class="hud top-hud" aria-label="比賽資訊">
-      <div class="stat"><span class="label">速度</span><strong><span id="speedText">0</span><small> km/h</small></strong></div>
+      <div class="hud-title"><span>RACE DATA</span><i>LIVE</i></div>
+
+      <div class="stat speed-stat">
+        <span class="label">速度</span>
+        <strong><span id="speedText">0</span><small> KM/H</small></strong>
+        <div class="speed-segments" aria-hidden="true"><i id="speedMeterFill"></i></div>
+      </div>
+
       <div class="stat"><span class="label">名次</span><strong id="rankText">1/6</strong></div>
       <div class="stat"><span class="label">圈數</span><strong id="lapText">1/3</strong></div>
-      <div class="stat"><span class="label">進度</span><strong id="progressText">0%</strong></div>
+
+      <div class="stat progress-stat">
+        <span class="label">進度</span>
+        <strong id="progressText">0%</strong>
+        <span class="progress-line" aria-hidden="true"><i id="progressMeterFill"></i></span>
+      </div>
+
       <div class="stat"><span class="label">時間</span><strong id="timeText">0:00.0</strong></div>
       <div class="stat"><span class="label">最佳</span><strong id="bestText">--</strong></div>
     </section>
 
+    <aside class="minimap-panel" aria-label="賽道小地圖">
+      <div class="minimap-topline"><span>TRACK MAP</span><b id="miniLapText">1 / 3 圈</b></div>
+      <svg class="minimap" viewBox="0 0 260 165" role="img" aria-label="賽道路線與目前位置">
+        <defs>
+          <filter id="mapGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="2.6" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <path class="map-shadow" d="M28 85 C28 35 70 24 101 49 C126 69 135 115 172 115 C211 115 230 87 220 57 C210 25 170 27 156 50 C141 75 146 132 109 139 C66 147 39 125 28 85 Z"/>
+        <path id="minimapPath" class="map-road" d="M28 85 C28 35 70 24 101 49 C126 69 135 115 172 115 C211 115 230 87 220 57 C210 25 170 27 156 50 C141 75 146 132 109 139 C66 147 39 125 28 85 Z"/>
+        <path class="map-line" d="M28 85 C28 35 70 24 101 49 C126 69 135 115 172 115 C211 115 230 87 220 57 C210 25 170 27 156 50 C141 75 146 132 109 139 C66 147 39 125 28 85 Z"/>
+        <circle class="map-rival rival-a" cx="69" cy="36" r="5"/>
+        <circle class="map-rival rival-b" cx="185" cy="114" r="5"/>
+        <circle class="map-rival rival-c" cx="220" cy="66" r="5"/>
+        <circle id="minimapPlayer" class="map-player" cx="28" cy="85" r="7" filter="url(#mapGlow)"/>
+      </svg>
+      <button id="mapSettingsBtn" class="map-settings" type="button" aria-label="切換視角">⚙</button>
+    </aside>
+
     <section class="status-row boost-only" aria-label="能量">
-      <div class="meter-wrap"><span>能量</span><div class="meter boost"><i id="boostBar"></i></div></div>
+      <div class="meter-wrap">
+        <div class="energy-copy"><span>能量</span><small>BOOST READY</small></div>
+        <div class="meter boost"><i id="boostBar"></i></div>
+        <b aria-hidden="true">ϟ</b>
+      </div>
     </section>
 
     <section id="notice" class="notice">
       <div class="notice-card">
         <div class="menu-heading">
           <div class="menu-copy">
-            <p class="eyebrow">TOY TRACK GP · VISUAL UPDATE V8.0</p>
-            <h1>模組高空賽道</h1>
-            <p id="noticeText">維持原本追尾駕駛視角，介面改為低多邊形玩具賽道風格：冷灰紫道路、霓虹護欄、積木車輛與橫式手機控制區。</p>
+            <p class="eyebrow">NEON TOY CIRCUIT · UI V8.1</p>
+            <h1>高空霓虹賽道</h1>
+            <p id="noticeText">保留原本追尾駕駛視角，介面改為你指定的霓虹紫賽車 HUD：左側賽況、右上小地圖、分段能量條與大型橫式觸控按鍵。</p>
           </div>
-          <div class="track-preview" aria-hidden="true"></div>
+          <div class="track-preview" aria-hidden="true">
+            <i class="preview-car one"></i><i class="preview-car two"></i><i class="preview-car three"></i>
+          </div>
         </div>
+
         <div class="notice-tips">
-          <span>追尾視角保留</span>
-          <span>低多邊形玩具風</span>
-          <span>橫式觸控優先</span>
+          <span>追尾視角</span>
+          <span>霓虹紫 HUD</span>
+          <span>手機橫式優先</span>
         </div>
+
         <div class="setup-grid">
           <div>
             <h2>選擇車色</h2>
@@ -79,6 +121,7 @@
               <button class="car-choice" data-car="5" type="button"><i class="swatch green"></i><span>綠色</span></button>
             </div>
           </div>
+
           <div>
             <h2>比賽圈數</h2>
             <div class="lap-select" aria-label="選擇比賽圈數">
@@ -87,6 +130,7 @@
               <button class="lap-choice" data-laps="5" type="button">5 圈<small>耐力賽</small></button>
             </div>
           </div>
+
           <div>
             <h2>比賽車數</h2>
             <div class="race-select" aria-label="選擇比賽車數">
@@ -96,19 +140,25 @@
             </div>
           </div>
         </div>
+
+        <button id="startBtn" class="menu-start" type="button"><i>▶</i><span>啟動比賽</span></button>
       </div>
     </section>
 
     <section id="countdown" class="countdown" hidden aria-live="polite">3</section>
 
-    <section class="controls" aria-label="遊戲操作">
-      <button id="startBtn" class="control primary" type="button">啟動</button>
-      <button id="brakeBtn" class="control brake" type="button">煞車／甩尾</button>
-      <button id="gasBtn" class="control gas" type="button">加速</button>
+    <section class="left-controls" aria-label="特殊操作">
+      <button id="nitroBtn" class="round-control nitro" type="button"><i>ϟ</i><span>氮氣</span></button>
+      <button id="driftBtn" class="round-control drift" type="button"><i>≋</i><span>甩尾</span></button>
+      <button id="resetBtn" class="round-control reset" type="button"><i>↻</i><span>重置</span></button>
+    </section>
+
+    <section class="controls" aria-label="油門與煞車">
+      <button id="brakeBtn" class="control brake" type="button"><i>◉</i><span>煞車</span></button>
+      <button id="gasBtn" class="control gas" type="button"><i>▲<br>▲</i><span>加速</span></button>
     </section>
 
     <section class="bottom-actions" aria-label="其他功能">
-      <button id="resetBtn" type="button">重置</button>
       <button id="cameraBtn" type="button">視角：追尾</button>
       <button id="soundBtn" type="button">音效：開</button>
       <span id="fpsText">WebGL 3D</span>
@@ -118,6 +168,7 @@
       <strong>這台裝置目前無法啟動 WebGL。</strong>
       <span>請改用 Chrome / Safari 最新版，或確認瀏覽器沒有關閉硬體加速。</span>
     </section>
+
     <section id="orientationGate" class="orientation-gate" aria-live="polite">
       <div class="rotate-card">
         <div class="rotate-icon">↻</div>
@@ -128,5 +179,6 @@
   </main>
 
   <script src="js/game3d.js"></script>
+  <script src="js/ui-v8.1.js"></script>
 </body>
 </html>
