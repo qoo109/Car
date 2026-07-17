@@ -7,32 +7,31 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="screen-orientation" content="landscape" />
-  <title>NEON TOY CIRCUIT｜高空賽道 V8.7</title>
+  <title>NEON TOY CIRCUIT｜六賽道 V8.8</title>
   <script>
     (function(){
       function apply(){
-        var w = window.innerWidth || document.documentElement.clientWidth || 0;
-        var h = window.innerHeight || document.documentElement.clientHeight || 0;
-        var portrait = h > w && w <= 820;
-        document.documentElement.style.setProperty('--app-height', h + 'px');
-        document.documentElement.classList.toggle('is-portrait-mobile', portrait);
-        document.documentElement.classList.toggle('is-landscape-mobile', !portrait && h <= 560 && w <= 1180);
+        var w=window.innerWidth||document.documentElement.clientWidth||0;
+        var h=window.innerHeight||document.documentElement.clientHeight||0;
+        var portrait=h>w&&w<=820;
+        document.documentElement.style.setProperty('--app-height',h+'px');
+        document.documentElement.classList.toggle('is-portrait-mobile',portrait);
+        document.documentElement.classList.toggle('is-landscape-mobile',!portrait&&h<=560&&w<=1180);
       }
-      function nudgeSafari(){ try { window.scrollTo(0, 1); } catch(e) {} }
-      apply();
-      nudgeSafari();
-      window.addEventListener('resize', apply, {passive:true});
-      window.addEventListener('orientationchange', function(){ setTimeout(apply, 80); setTimeout(nudgeSafari, 160); }, {passive:true});
-      window.addEventListener('touchstart', nudgeSafari, {passive:true, once:false});
+      function nudgeSafari(){try{window.scrollTo(0,1);}catch(e){}}
+      apply();nudgeSafari();
+      window.addEventListener('resize',apply,{passive:true});
+      window.addEventListener('orientationchange',function(){setTimeout(apply,80);setTimeout(nudgeSafari,160);},{passive:true});
+      window.addEventListener('touchstart',nudgeSafari,{passive:true,once:false});
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=8.7" />
-  <link rel="stylesheet" href="ui-v8.css?v=8.7" />
-  <link rel="stylesheet" href="v8.3-fx.css?v=8.7" />
-  <link rel="stylesheet" href="v8.4-race.css?v=8.7" />
-  <link rel="stylesheet" href="v8.5-pro.css?v=8.7" />
-  <link rel="stylesheet" href="v8.6-world.css?v=8.7" />
-  <link rel="stylesheet" href="v8.7-ghost-route.css?v=8.7" />
+  <link rel="stylesheet" href="style.css?v=8.8" />
+  <link rel="stylesheet" href="ui-v8.css?v=8.8" />
+  <link rel="stylesheet" href="v8.3-fx.css?v=8.8" />
+  <link rel="stylesheet" href="v8.4-race.css?v=8.8" />
+  <link rel="stylesheet" href="v8.5-pro.css?v=8.8" />
+  <link rel="stylesheet" href="v8.6-world.css?v=8.8" />
+  <link rel="stylesheet" href="v8.8-tracks.css?v=8.8" />
 </head>
 <body>
   <main class="game-shell">
@@ -49,29 +48,21 @@
     <div id="trackZoneBadge" class="track-zone-badge" aria-live="polite"><b>維修直線</b><small>PIT STRAIGHT</small></div>
     <div id="curveWarning" class="curve-warning" aria-live="polite"><span><b>右彎</b><small>彎道接近</small></span></div>
     <div id="proximityBadge" class="proximity-badge" aria-live="polite"><i></i><span>前方車輛 <b>30m</b></span></div>
-    <div id="raceToast" class="race-toast" aria-live="polite">V8.7 3D 幽靈與鏡像賽道啟動</div>
+    <div id="raceToast" class="race-toast" aria-live="polite">V8.8 六賽道系統啟動</div>
     <div id="raceEventFeed" class="race-event-feed" aria-live="polite">準備出發</div>
     <div id="sectorPanel" class="sector-panel" aria-live="polite"><div><span id="sectorName">區段 1</span><strong id="sectorTime">0.00s</strong></div></div>
 
     <div class="race-brand" aria-hidden="true">
       <span class="race-brand-mark"><i></i></span>
-      <span class="race-brand-copy"><strong>NEON TOY CIRCUIT</strong><small>SKYWAY GRAND PRIX · V8.7</small></span>
+      <span class="race-brand-copy"><strong>NEON TOY CIRCUIT</strong><small>SIX TRACK CHAMPIONSHIP · V8.8</small></span>
     </div>
 
     <section class="hud top-hud" aria-label="比賽資訊">
       <div class="hud-title"><span>RACE DATA</span><i>LIVE</i></div>
-      <div class="stat speed-stat">
-        <span class="label">速度</span>
-        <strong><span id="speedText">0</span><small> KM/H</small></strong>
-        <div class="speed-segments" aria-hidden="true"><i id="speedMeterFill"></i></div>
-      </div>
+      <div class="stat speed-stat"><span class="label">速度</span><strong><span id="speedText">0</span><small> KM/H</small></strong><div class="speed-segments" aria-hidden="true"><i id="speedMeterFill"></i></div></div>
       <div class="stat"><span class="label">名次</span><strong id="rankText">1/6</strong></div>
       <div class="stat"><span class="label">圈數</span><strong id="lapText">1/3</strong></div>
-      <div class="stat progress-stat">
-        <span class="label">進度</span>
-        <strong id="progressText">0%</strong>
-        <span class="progress-line" aria-hidden="true"><i id="progressMeterFill"></i></span>
-      </div>
+      <div class="stat progress-stat"><span class="label">進度</span><strong id="progressText">0%</strong><span class="progress-line" aria-hidden="true"><i id="progressMeterFill"></i></span></div>
       <div class="stat"><span class="label">時間</span><strong id="timeText">0:00.0</strong></div>
       <div class="stat"><span class="label">最佳</span><strong id="bestText">--</strong></div>
     </section>
@@ -79,125 +70,55 @@
     <aside class="minimap-panel" aria-label="賽道小地圖">
       <div class="minimap-topline"><span>TRACK MAP</span><b id="miniLapText">1 / 3 圈</b></div>
       <svg class="minimap" viewBox="0 0 260 165" role="img" aria-label="賽道路線與目前位置">
-        <defs>
-          <filter id="mapGlow" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="2.6" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
+        <defs><filter id="mapGlow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
         <path class="map-shadow" d="M28 85 C28 35 70 24 101 49 C126 69 135 115 172 115 C211 115 230 87 220 57 C210 25 170 27 156 50 C141 75 146 132 109 139 C66 147 39 125 28 85 Z"/>
         <path id="minimapPath" class="map-road" d="M28 85 C28 35 70 24 101 49 C126 69 135 115 172 115 C211 115 230 87 220 57 C210 25 170 27 156 50 C141 75 146 132 109 139 C66 147 39 125 28 85 Z"/>
         <path class="map-line" d="M28 85 C28 35 70 24 101 49 C126 69 135 115 172 115 C211 115 230 87 220 57 C210 25 170 27 156 50 C141 75 146 132 109 139 C66 147 39 125 28 85 Z"/>
-        <circle class="map-rival rival-a" cx="69" cy="36" r="5"/>
-        <circle class="map-rival rival-b" cx="185" cy="114" r="5"/>
-        <circle class="map-rival rival-c" cx="220" cy="66" r="5"/>
+        <circle class="map-rival rival-a" cx="69" cy="36" r="5"/><circle class="map-rival rival-b" cx="185" cy="114" r="5"/><circle class="map-rival rival-c" cx="220" cy="66" r="5"/>
         <circle id="minimapPlayer" class="map-player" cx="28" cy="85" r="7" filter="url(#mapGlow)"/>
       </svg>
       <button id="mapSettingsBtn" class="map-settings" type="button" aria-label="切換視角">⚙</button>
     </aside>
 
-    <section class="status-row boost-only" aria-label="能量">
-      <div class="meter-wrap">
-        <div class="energy-copy"><span>能量</span><small>BOOST READY</small></div>
-        <div class="meter boost"><i id="boostBar"></i></div>
-        <b aria-hidden="true">ϟ</b>
-      </div>
-    </section>
+    <section class="status-row boost-only" aria-label="能量"><div class="meter-wrap"><div class="energy-copy"><span>能量</span><small>BOOST READY</small></div><div class="meter boost"><i id="boostBar"></i></div><b aria-hidden="true">ϟ</b></div></section>
     <button id="lightingToggle" class="lighting-toggle" type="button" aria-pressed="true">燈光：開</button>
 
     <section id="notice" class="notice">
       <div class="notice-card">
         <div class="menu-heading">
-          <div class="menu-copy">
-            <p class="eyebrow">NEON TOY CIRCUIT · GHOST ROUTE V8.7</p>
-            <h1>晴空雙向錦標賽</h1>
-            <p id="noticeText">V8.7 更新：半透明 3D 幽靈車會在賽道前方重現最佳跑法；新增正向與鏡像兩種路線，鏡像模式會同步反轉觸控、方向盤與鍵盤轉向。</p>
-          </div>
-          <div class="track-preview" aria-hidden="true">
-            <i class="preview-car one"></i><i class="preview-car two"></i><i class="preview-car three"></i>
-          </div>
+          <div class="menu-copy"><p class="eyebrow">NEON TOY CIRCUIT · SIX TRACK UPDATE V8.8</p><h1>六賽道高空錦標賽</h1><p id="noticeText">V8.8 新增五條賽道配置：霓虹港灣、雲海山路、工業疾走、黃昏環線與暴風天橋，加上原本晴空高架共六條。每條都有獨立天候、操控感、小地圖與加速區。</p></div>
+          <div class="track-preview" aria-hidden="true"><i class="preview-car one"></i><i class="preview-car two"></i><i class="preview-car three"></i></div>
         </div>
-        <div class="notice-tips">
-          <span>半透明 3D 幽靈車</span>
-          <span>正向／鏡像賽道</span>
-          <span>錦標賽與碰撞保留</span>
-        </div>
+        <div class="notice-tips"><span>六條賽道配置</span><span>獨立天候與操控</span><span>碰撞／幽靈／錦標賽</span></div>
         <div class="setup-grid">
-          <div>
-            <h2>選擇車色與車型</h2>
-            <div class="garage" aria-label="選擇車色">
-              <button class="car-choice active" data-car="0" type="button"><i class="swatch classic"></i><span>白色</span></button>
-              <button class="car-choice" data-car="1" type="button"><i class="swatch sport"></i><span>黃色</span></button>
-              <button class="car-choice" data-car="2" type="button"><i class="swatch blue"></i><span>藍色</span></button>
-              <button class="car-choice" data-car="3" type="button"><i class="swatch black"></i><span>黑色</span></button>
-              <button class="car-choice" data-car="4" type="button"><i class="swatch red"></i><span>紅色</span></button>
-              <button class="car-choice" data-car="5" type="button"><i class="swatch green"></i><span>綠色</span></button>
-            </div>
-          </div>
-          <div>
-            <h2>比賽圈數</h2>
-            <div class="lap-select" aria-label="選擇比賽圈數">
-              <button class="lap-choice" data-laps="1" type="button">1 圈<small>快速測試</small></button>
-              <button class="lap-choice active" data-laps="3" type="button">3 圈<small>標準賽</small></button>
-              <button class="lap-choice" data-laps="5" type="button">5 圈<small>耐力賽</small></button>
-            </div>
-          </div>
-          <div>
-            <h2>比賽車數</h2>
-            <div class="race-select" aria-label="選擇比賽車數">
-              <button class="race-choice" data-cars="1" type="button">單人<small>練習</small></button>
-              <button class="race-choice" data-cars="3" type="button">3 台<small>小型賽</small></button>
-              <button class="race-choice active" data-cars="6" type="button">6 台<small>完整對戰</small></button>
-            </div>
-          </div>
+          <div><h2>選擇車色與車型</h2><div class="garage" aria-label="選擇車色">
+            <button class="car-choice active" data-car="0" type="button"><i class="swatch classic"></i><span>白色</span></button><button class="car-choice" data-car="1" type="button"><i class="swatch sport"></i><span>黃色</span></button><button class="car-choice" data-car="2" type="button"><i class="swatch blue"></i><span>藍色</span></button><button class="car-choice" data-car="3" type="button"><i class="swatch black"></i><span>黑色</span></button><button class="car-choice" data-car="4" type="button"><i class="swatch red"></i><span>紅色</span></button><button class="car-choice" data-car="5" type="button"><i class="swatch green"></i><span>綠色</span></button>
+          </div></div>
+          <div><h2>比賽圈數</h2><div class="lap-select" aria-label="選擇比賽圈數"><button class="lap-choice" data-laps="1" type="button">1 圈<small>快速測試</small></button><button class="lap-choice active" data-laps="3" type="button">3 圈<small>標準賽</small></button><button class="lap-choice" data-laps="5" type="button">5 圈<small>耐力賽</small></button></div></div>
+          <div><h2>比賽車數</h2><div class="race-select" aria-label="選擇比賽車數"><button class="race-choice" data-cars="1" type="button">單人<small>練習</small></button><button class="race-choice" data-cars="3" type="button">3 台<small>小型賽</small></button><button class="race-choice active" data-cars="6" type="button">6 台<small>完整對戰</small></button></div></div>
         </div>
         <button id="startBtn" class="menu-start" type="button"><i>▶</i><span>啟動比賽</span></button>
       </div>
     </section>
 
     <section id="countdown" class="countdown" hidden aria-live="polite">3</section>
-    <section class="steering-cluster" aria-label="虛擬方向盤">
-      <div id="steeringWheel" class="steering-wheel" role="slider" aria-label="方向盤" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0">
-        <i class="wheel-spoke"></i><i id="steeringKnob" class="wheel-hub"></i>
-      </div>
-      <span class="steering-caption">STEERING</span>
-    </section>
-    <section class="left-controls" aria-label="特殊操作">
-      <button id="nitroBtn" class="round-control nitro" type="button"><i>ϟ</i><span>氮氣</span></button>
-      <button id="driftBtn" class="round-control drift" type="button"><i>≋</i><span>甩尾</span></button>
-      <button id="resetBtn" class="round-control reset" type="button"><i>↻</i><span>重置</span></button>
-    </section>
-    <section class="controls" aria-label="油門與煞車">
-      <button id="brakeBtn" class="control brake" type="button"><i>◉</i><span>煞車</span></button>
-      <button id="gasBtn" class="control gas" type="button"><i>▲<br>▲</i><span>加速</span></button>
-    </section>
-    <section class="bottom-actions" aria-label="其他功能">
-      <button id="cameraBtn" type="button">視角：追尾</button>
-      <button id="soundBtn" type="button">音效：開</button>
-      <span id="fpsText">WebGL 3D</span>
-    </section>
+    <section class="steering-cluster" aria-label="虛擬方向盤"><div id="steeringWheel" class="steering-wheel" role="slider" aria-label="方向盤" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0"><i class="wheel-spoke"></i><i id="steeringKnob" class="wheel-hub"></i></div><span class="steering-caption">STEERING</span></section>
+    <section class="left-controls" aria-label="特殊操作"><button id="nitroBtn" class="round-control nitro" type="button"><i>ϟ</i><span>氮氣</span></button><button id="driftBtn" class="round-control drift" type="button"><i>≋</i><span>甩尾</span></button><button id="resetBtn" class="round-control reset" type="button"><i>↻</i><span>重置</span></button></section>
+    <section class="controls" aria-label="油門與煞車"><button id="brakeBtn" class="control brake" type="button"><i>◉</i><span>煞車</span></button><button id="gasBtn" class="control gas" type="button"><i>▲<br>▲</i><span>加速</span></button></section>
+    <section class="bottom-actions" aria-label="其他功能"><button id="cameraBtn" type="button">視角：追尾</button><button id="soundBtn" type="button">音效：開</button><span id="fpsText">WebGL 3D</span></section>
 
-    <section id="webglError" class="webgl-error" hidden>
-      <strong>這台裝置目前無法啟動 WebGL。</strong>
-      <span>請改用 Chrome / Safari 最新版，或確認瀏覽器沒有關閉硬體加速。</span>
-    </section>
-    <section id="orientationGate" class="orientation-gate" aria-live="polite">
-      <div class="rotate-card">
-        <div class="rotate-icon">↻</div>
-        <strong>請將手機轉成橫式遊玩</strong>
-        <span>目前偵測到直式畫面。轉橫後才會顯示設定、HUD 與操作按鈕。iPhone 建議先關閉直向鎖定。</span>
-      </div>
-    </section>
+    <section id="webglError" class="webgl-error" hidden><strong>這台裝置目前無法啟動 WebGL。</strong><span>請改用 Chrome / Safari 最新版，或確認瀏覽器沒有關閉硬體加速。</span></section>
+    <section id="orientationGate" class="orientation-gate" aria-live="polite"><div class="rotate-card"><div class="rotate-icon">↻</div><strong>請將手機轉成橫式遊玩</strong><span>目前偵測到直式畫面。轉橫後才會顯示設定、HUD 與操作按鈕。iPhone 建議先關閉直向鎖定。</span></div></section>
   </main>
 
-  <script src="js/v8.6-sunny-hook.js?v=8.7"></script>
-  <script src="js/game3d.js?v=8.7"></script>
-  <script src="js/ui-v8.1.js?v=8.7"></script>
-  <script src="js/v8.3-fx.js?v=8.7"></script>
-  <script src="js/v8.4-race.js?v=8.7"></script>
-  <script src="js/v8.5-pro.js?v=8.7"></script>
-  <script src="js/v8.5.1-sunny-start.js?v=8.7"></script>
-  <script src="js/v8.6-race-modes.js?v=8.7"></script>
-  <script src="js/v8.7-ghost-route.js?v=8.7"></script>
+  <script src="js/v8.6-sunny-hook.js?v=8.8"></script>
+  <script src="js/game3d.js?v=8.8"></script>
+  <script src="js/ui-v8.1.js?v=8.8"></script>
+  <script src="js/v8.3-fx.js?v=8.8"></script>
+  <script src="js/v8.4-race.js?v=8.8"></script>
+  <script src="js/v8.5-pro.js?v=8.8"></script>
+  <script src="js/v8.5.1-sunny-start.js?v=8.8"></script>
+  <script src="js/v8.6-race-modes.js?v=8.8"></script>
+  <script src="js/v8.8-tracks.js?v=8.8"></script>
 </body>
 </html>
