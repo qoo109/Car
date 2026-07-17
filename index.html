@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="screen-orientation" content="landscape" />
-  <title>NEON TOY CIRCUIT｜高空賽道 V8.2</title>
+  <title>NEON TOY CIRCUIT｜高空賽道 V8.3</title>
   <script>
     (function(){
       function apply(){
@@ -26,17 +26,24 @@
       window.addEventListener('touchstart', nudgeSafari, {passive:true, once:false});
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=8.2" />
-  <link rel="stylesheet" href="ui-v8.css?v=8.2" />
+  <link rel="stylesheet" href="style.css?v=8.3" />
+  <link rel="stylesheet" href="ui-v8.css?v=8.3" />
+  <link rel="stylesheet" href="v8.3-fx.css?v=8.3" />
 </head>
 <body>
   <main class="game-shell">
     <canvas id="gameCanvas" aria-label="全 3D 賽車遊戲畫面"></canvas>
     <div class="screen-vignette" aria-hidden="true"></div>
+    <canvas id="speedFxCanvas" aria-hidden="true"></canvas>
+    <div id="startGateFx" class="start-gate-fx" aria-hidden="true"><span>NEON TOY CIRCUIT</span></div>
+    <div id="trackZoneBadge" class="track-zone-badge" aria-live="polite"><b>維修直線</b><small>PIT STRAIGHT</small></div>
+    <div id="curveWarning" class="curve-warning" aria-live="polite"><span><b>右彎</b><small>彎道接近</small></span></div>
+    <div id="proximityBadge" class="proximity-badge" aria-live="polite"><i></i><span>前方車輛 <b>30m</b></span></div>
+    <div id="raceToast" class="race-toast" aria-live="polite">V8.3 賽道系統啟動</div>
 
     <div class="race-brand" aria-hidden="true">
       <span class="race-brand-mark"><i></i></span>
-      <span class="race-brand-copy"><strong>NEON TOY CIRCUIT</strong><small>SKYWAY GRAND PRIX · V8.2</small></span>
+      <span class="race-brand-copy"><strong>NEON TOY CIRCUIT</strong><small>SKYWAY GRAND PRIX · V8.3</small></span>
     </div>
 
     <section class="hud top-hud" aria-label="比賽資訊">
@@ -89,18 +96,18 @@
       <div class="notice-card">
         <div class="menu-heading">
           <div class="menu-copy">
-            <p class="eyebrow">NEON TOY CIRCUIT · WORLD UPDATE V8.2</p>
+            <p class="eyebrow">NEON TOY CIRCUIT · RACE UPDATE V8.3</p>
             <h1>高空霓虹賽道</h1>
-            <p id="noticeText">V8.2 更新：平滑彎道、會轉動的輪胎、加速與煞車車身動態、真實賽道小地圖，以及城市、森林、工業與維修區場景。</p>
+            <p id="noticeText">V8.3 更新：高速動態特效、即時彎道預警、前後車距提示、賽道分區標示、圈數動畫與起終點門架。</p>
           </div>
           <div class="track-preview" aria-hidden="true">
             <i class="preview-car one"></i><i class="preview-car two"></i><i class="preview-car three"></i>
           </div>
         </div>
         <div class="notice-tips">
-          <span>平滑高架賽道</span>
-          <span>六款玩具車型</span>
-          <span>動態小地圖</span>
+          <span>彎道預警系統</span>
+          <span>高速霓虹特效</span>
+          <span>前後車雷達</span>
         </div>
         <div class="setup-grid">
           <div>
@@ -164,7 +171,8 @@
     </section>
   </main>
 
-  <script src="js/game3d.js?v=8.2"></script>
-  <script src="js/ui-v8.1.js?v=8.2"></script>
+  <script src="js/game3d.js?v=8.3"></script>
+  <script src="js/ui-v8.1.js?v=8.3"></script>
+  <script src="js/v8.3-fx.js?v=8.3"></script>
 </body>
 </html>
