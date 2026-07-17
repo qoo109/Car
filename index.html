@@ -7,8 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="screen-orientation" content="landscape" />
-  <title>NEON TOY CIRCUIT｜高空賽道 V8.1</title>
-
+  <title>NEON TOY CIRCUIT｜高空賽道 V8.2</title>
   <script>
     (function(){
       function apply(){
@@ -27,8 +26,8 @@
       window.addEventListener('touchstart', nudgeSafari, {passive:true, once:false});
     })();
   </script>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="ui-v8.css" />
+  <link rel="stylesheet" href="style.css?v=8.2" />
+  <link rel="stylesheet" href="ui-v8.css?v=8.2" />
 </head>
 <body>
   <main class="game-shell">
@@ -37,27 +36,23 @@
 
     <div class="race-brand" aria-hidden="true">
       <span class="race-brand-mark"><i></i></span>
-      <span class="race-brand-copy"><strong>NEON TOY CIRCUIT</strong><small>SKYWAY GRAND PRIX</small></span>
+      <span class="race-brand-copy"><strong>NEON TOY CIRCUIT</strong><small>SKYWAY GRAND PRIX · V8.2</small></span>
     </div>
 
     <section class="hud top-hud" aria-label="比賽資訊">
       <div class="hud-title"><span>RACE DATA</span><i>LIVE</i></div>
-
       <div class="stat speed-stat">
         <span class="label">速度</span>
         <strong><span id="speedText">0</span><small> KM/H</small></strong>
         <div class="speed-segments" aria-hidden="true"><i id="speedMeterFill"></i></div>
       </div>
-
       <div class="stat"><span class="label">名次</span><strong id="rankText">1/6</strong></div>
       <div class="stat"><span class="label">圈數</span><strong id="lapText">1/3</strong></div>
-
       <div class="stat progress-stat">
         <span class="label">進度</span>
         <strong id="progressText">0%</strong>
         <span class="progress-line" aria-hidden="true"><i id="progressMeterFill"></i></span>
       </div>
-
       <div class="stat"><span class="label">時間</span><strong id="timeText">0:00.0</strong></div>
       <div class="stat"><span class="label">最佳</span><strong id="bestText">--</strong></div>
     </section>
@@ -94,24 +89,22 @@
       <div class="notice-card">
         <div class="menu-heading">
           <div class="menu-copy">
-            <p class="eyebrow">NEON TOY CIRCUIT · UI V8.1</p>
+            <p class="eyebrow">NEON TOY CIRCUIT · WORLD UPDATE V8.2</p>
             <h1>高空霓虹賽道</h1>
-            <p id="noticeText">保留原本追尾駕駛視角，介面改為你指定的霓虹紫賽車 HUD：左側賽況、右上小地圖、分段能量條與大型橫式觸控按鍵。</p>
+            <p id="noticeText">V8.2 更新：平滑彎道、會轉動的輪胎、加速與煞車車身動態、真實賽道小地圖，以及城市、森林、工業與維修區場景。</p>
           </div>
           <div class="track-preview" aria-hidden="true">
             <i class="preview-car one"></i><i class="preview-car two"></i><i class="preview-car three"></i>
           </div>
         </div>
-
         <div class="notice-tips">
-          <span>追尾視角</span>
-          <span>霓虹紫 HUD</span>
-          <span>手機橫式優先</span>
+          <span>平滑高架賽道</span>
+          <span>六款玩具車型</span>
+          <span>動態小地圖</span>
         </div>
-
         <div class="setup-grid">
           <div>
-            <h2>選擇車色</h2>
+            <h2>選擇車色與車型</h2>
             <div class="garage" aria-label="選擇車色">
               <button class="car-choice active" data-car="0" type="button"><i class="swatch classic"></i><span>白色</span></button>
               <button class="car-choice" data-car="1" type="button"><i class="swatch sport"></i><span>黃色</span></button>
@@ -121,7 +114,6 @@
               <button class="car-choice" data-car="5" type="button"><i class="swatch green"></i><span>綠色</span></button>
             </div>
           </div>
-
           <div>
             <h2>比賽圈數</h2>
             <div class="lap-select" aria-label="選擇比賽圈數">
@@ -130,7 +122,6 @@
               <button class="lap-choice" data-laps="5" type="button">5 圈<small>耐力賽</small></button>
             </div>
           </div>
-
           <div>
             <h2>比賽車數</h2>
             <div class="race-select" aria-label="選擇比賽車數">
@@ -140,24 +131,20 @@
             </div>
           </div>
         </div>
-
         <button id="startBtn" class="menu-start" type="button"><i>▶</i><span>啟動比賽</span></button>
       </div>
     </section>
 
     <section id="countdown" class="countdown" hidden aria-live="polite">3</section>
-
     <section class="left-controls" aria-label="特殊操作">
       <button id="nitroBtn" class="round-control nitro" type="button"><i>ϟ</i><span>氮氣</span></button>
       <button id="driftBtn" class="round-control drift" type="button"><i>≋</i><span>甩尾</span></button>
       <button id="resetBtn" class="round-control reset" type="button"><i>↻</i><span>重置</span></button>
     </section>
-
     <section class="controls" aria-label="油門與煞車">
       <button id="brakeBtn" class="control brake" type="button"><i>◉</i><span>煞車</span></button>
       <button id="gasBtn" class="control gas" type="button"><i>▲<br>▲</i><span>加速</span></button>
     </section>
-
     <section class="bottom-actions" aria-label="其他功能">
       <button id="cameraBtn" type="button">視角：追尾</button>
       <button id="soundBtn" type="button">音效：開</button>
@@ -168,7 +155,6 @@
       <strong>這台裝置目前無法啟動 WebGL。</strong>
       <span>請改用 Chrome / Safari 最新版，或確認瀏覽器沒有關閉硬體加速。</span>
     </section>
-
     <section id="orientationGate" class="orientation-gate" aria-live="polite">
       <div class="rotate-card">
         <div class="rotate-icon">↻</div>
@@ -178,7 +164,7 @@
     </section>
   </main>
 
-  <script src="js/game3d.js"></script>
-  <script src="js/ui-v8.1.js"></script>
+  <script src="js/game3d.js?v=8.2"></script>
+  <script src="js/ui-v8.1.js?v=8.2"></script>
 </body>
 </html>
