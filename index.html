@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#07111f" />
+  <meta name="theme-color" content="#292936" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="screen-orientation" content="landscape" />
-  <title>全 3D 模型車高空賽道 V7.1</title>
+  <title>TOY TRACK GP｜高空賽道 V8.0</title>
 
   <script>
     (function(){
@@ -28,10 +28,16 @@
     })();
   </script>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="ui-v8.css" />
 </head>
 <body>
   <main class="game-shell">
     <canvas id="gameCanvas" aria-label="全 3D 賽車遊戲畫面"></canvas>
+
+    <div class="race-brand" aria-hidden="true">
+      <span class="race-brand-mark"></span>
+      <span class="race-brand-copy"><strong>TOY TRACK GP</strong><small>MODULAR SKY CIRCUIT</small></span>
+    </div>
 
     <section class="hud top-hud" aria-label="比賽資訊">
       <div class="stat"><span class="label">速度</span><strong><span id="speedText">0</span><small> km/h</small></strong></div>
@@ -48,13 +54,18 @@
 
     <section id="notice" class="notice">
       <div class="notice-card">
-        <p class="eyebrow">RACING PLAYABLE V7.1</p>
-        <h1>橫式實戰 HUD 版</h1>
-        <p id="noticeText">這版把手機橫式 HUD、倒數、底部按鈕重新壓縮，Safari 工具列出現時也比較不會擋住賽道。</p>
+        <div class="menu-heading">
+          <div class="menu-copy">
+            <p class="eyebrow">TOY TRACK GP · VISUAL UPDATE V8.0</p>
+            <h1>模組高空賽道</h1>
+            <p id="noticeText">維持原本追尾駕駛視角，介面改為低多邊形玩具賽道風格：冷灰紫道路、霓虹護欄、積木車輛與橫式手機控制區。</p>
+          </div>
+          <div class="track-preview" aria-hidden="true"></div>
+        </div>
         <div class="notice-tips">
-          <span>橫式專用</span>
-          <span>實戰 HUD</span>
-          <span>強化 AI</span>
+          <span>追尾視角保留</span>
+          <span>低多邊形玩具風</span>
+          <span>橫式觸控優先</span>
         </div>
         <div class="setup-grid">
           <div>
@@ -92,7 +103,7 @@
 
     <section class="controls" aria-label="遊戲操作">
       <button id="startBtn" class="control primary" type="button">啟動</button>
-      <button id="brakeBtn" class="control brake" type="button">煞車</button>
+      <button id="brakeBtn" class="control brake" type="button">煞車／甩尾</button>
       <button id="gasBtn" class="control gas" type="button">加速</button>
     </section>
 
