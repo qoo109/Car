@@ -3,74 +3,97 @@
 
   const $ = (id) => document.getElementById(id);
   const canvas = $('gameCanvas');
-  const gl = canvas.getContext('webgl', { antialias: true, alpha: false, powerPreference: 'high-performance' });
   const errorBox = $('webglError');
+  const gl = canvas?.getContext('webgl', {
+    antialias: true,
+    alpha: false,
+    powerPreference: 'high-performance',
+    preserveDrawingBuffer: false
+  });
 
-  if (!gl) {
-    errorBox.hidden = false;
+  if (!canvas || !gl) {
+    if (errorBox) errorBox.hidden = false;
     return;
   }
 
   const UI = {
-    speedText: $('speedText'), rankText: $('rankText'), lapText: $('lapText'), progressText: $('progressText'), timeText: $('timeText'), bestText: $('bestText'),
-    healthBar: $('healthBar'), boostBar: $('boostBar'), fpsText: $('fpsText'), notice: $('notice'), noticeText: $('noticeText'), countdown: $('countdown'),
-    startBtn: $('startBtn'), gasBtn: $('gasBtn'), brakeBtn: $('brakeBtn'), resetBtn: $('resetBtn'), cameraBtn: $('cameraBtn'), soundBtn: $('soundBtn'),
+    speedText: $('speedText'),
+    rankText: $('rankText'),
+    lapText: $('lapText'),
+    progressText: $('progressText'),
+    timeText: $('timeText'),
+    bestText: $('bestText'),
+    boostBar: $('boostBar'),
+    fpsText: $('fpsText'),
+    notice: $('notice'),
+    noticeText: $('noticeText'),
+    countdown: $('countdown'),
+    startBtn: $('startBtn'),
+    gasBtn: $('gasBtn'),
+    brakeBtn: $('brakeBtn'),
+    nitroBtn: $('nitroBtn'),
+    driftBtn: $('driftBtn'),
+    resetBtn: $('resetBtn'),
+    cameraBtn: $('cameraBtn'),
+    soundBtn: $('soundBtn'),
     carChoices: Array.from(document.querySelectorAll('.car-choice')),
     lapChoices: Array.from(document.querySelectorAll('.lap-choice')),
     raceChoices: Array.from(document.querySelectorAll('.race-choice'))
   };
 
-  function updateOrientationClass() {
-    const w = window.innerWidth || document.documentElement.clientWidth || 0;
-    const h = window.innerHeight || document.documentElement.clientHeight || 0;
-    const portrait = h > w && w <= 820;
-    document.documentElement.classList.toggle('is-portrait-mobile', portrait);
-    document.documentElement.classList.toggle('is-landscape-mobile', !portrait && h <= 520 && w <= 980);
-  }
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smoothstep = (a, b, v) => {
+    const t = clamp((v - a) / Math.max(0.0001, b - a), 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+  const mod = (n, m) => ((n % m) + m) % m;
+
+  const COLORS = {
+    sky: [0.080, 0.066, 0.145],
+    fog: [0.150, 0.125, 0.235],
+    void: [0.055, 0.052, 0.080],
+    deck: [0.205, 0.205, 0.285],
+    deckDark: [0.125, 0.120, 0.185],
+    asphalt: [0.225, 0.230, 0.315],
+    asphaltAlt: [0.255, 0.255, 0.345],
+    lane: [0.790, 0.805, 0.905],
+    rail: [0.520, 0.505, 0.690],
+    railTop: [0.710, 0.675, 0.920],
+    purple: [0.550, 0.290, 1.000],
+    purpleSoft: [0.690, 0.490, 1.000],
+    red: [1.000, 0.180, 0.230],
+    orange: [1.000, 0.470, 0.120],
+    gold: [1.000, 0.720, 0.190],
+    green: [0.190, 0.850, 0.500],
+    cyan: [0.220, 0.880, 1.000],
+    white: [0.950, 0.950, 1.000],
+    black: [0.035, 0.035, 0.055],
+    glass: [0.075, 0.110, 0.190],
+    smoke: [0.620, 0.600, 0.760],
+    tree: [0.090, 0.115, 0.135],
+    trunk: [0.170, 0.125, 0.140],
+    building: [0.235, 0.225, 0.330],
+    window: [0.730, 0.430, 1.000]
+  };
 
   const CAR_SKINS = [
-    { name: '白色', body: [0.94, 0.91, 0.78], stripe: [0.12, 0.13, 0.14], glass: [0.08, 0.16, 0.22], max: 126, accel: 74, grip: 1.00 },
-    { name: '黃色', body: [1.00, 0.67, 0.08], stripe: [0.95, 0.16, 0.09], glass: [0.08, 0.12, 0.18], max: 126, accel: 74, grip: 1.00 },
-    { name: '藍色', body: [0.08, 0.30, 0.86], stripe: [0.26, 0.55, 1.00], glass: [0.04, 0.10, 0.18], max: 126, accel: 74, grip: 1.00 },
-    { name: '黑色', body: [0.05, 0.06, 0.08], stripe: [0.42, 0.45, 0.52], glass: [0.02, 0.05, 0.09], max: 126, accel: 74, grip: 1.00 },
-    { name: '紅色', body: [0.88, 0.06, 0.08], stripe: [1.00, 0.45, 0.20], glass: [0.06, 0.10, 0.15], max: 126, accel: 74, grip: 1.00 },
-    { name: '綠色', body: [0.07, 0.55, 0.22], stripe: [0.55, 1.00, 0.35], glass: [0.04, 0.11, 0.13], max: 126, accel: 74, grip: 1.00 }
+    { name: '白色', body: [0.91, 0.90, 0.98], stripe: [1.00, 0.25, 0.20], accent: [0.60, 0.38, 1.00], max: 126, accel: 78, grip: 1.02 },
+    { name: '黃色', body: [1.00, 0.62, 0.10], stripe: [1.00, 0.93, 0.70], accent: [1.00, 0.25, 0.16], max: 128, accel: 77, grip: 0.99 },
+    { name: '藍色', body: [0.12, 0.35, 0.95], stripe: [0.63, 0.82, 1.00], accent: [0.46, 0.26, 1.00], max: 129, accel: 75, grip: 1.01 },
+    { name: '黑色', body: [0.055, 0.060, 0.090], stripe: [0.52, 0.46, 0.72], accent: [0.90, 0.25, 0.85], max: 130, accel: 74, grip: 0.98 },
+    { name: '紅色', body: [0.94, 0.10, 0.12], stripe: [1.00, 0.82, 0.75], accent: [1.00, 0.35, 0.14], max: 127, accel: 79, grip: 1.00 },
+    { name: '綠色', body: [0.10, 0.66, 0.30], stripe: [0.74, 1.00, 0.82], accent: [0.45, 0.30, 1.00], max: 126, accel: 80, grip: 1.03 }
   ];
 
-  const palette = {
-    sky: [0.42, 0.72, 0.95, 1],
-    grass: [0.26, 0.56, 0.26],
-    grass2: [0.18, 0.43, 0.18],
-    dirt: [0.48, 0.30, 0.16],
-    asphalt: [0.11, 0.12, 0.13],
-    asphalt2: [0.16, 0.17, 0.18],
-    line: [0.95, 0.88, 0.55],
-    white: [0.92, 0.94, 0.92],
-    red: [0.78, 0.09, 0.08],
-    rail: [0.46, 0.48, 0.52],
-    railDark: [0.24, 0.25, 0.28],
-    trunk: [0.45, 0.27, 0.14],
-    leaves: [0.10, 0.45, 0.16],
-    house: [0.75, 0.55, 0.34],
-    roof: [0.58, 0.13, 0.10],
-    cyan: [0.14, 0.88, 1.00],
-    boost: [0.35, 0.95, 1.00],
-    smoke: [0.65, 0.68, 0.72]
-  };
-
   const WORLD = {
-    roadWidth: 32,
-    segment: 8,
-    drawAhead: 345,
-    drawBehind: 52,
-    propRange: 410,
-    roadY: 0,
-    lapLength: 2860
+    lapLength: 3000,
+    roadWidth: 33,
+    segment: 7,
+    drawAhead: 360,
+    drawBehind: 56,
+    propRange: 390
   };
-
-  // V6.3：把 V6.1 的 GP 路線壓縮成短程高速賽道，保留大圈彎、S 彎、髮夾與盲坡節奏。
-  const TRACK_TEMPLATE_LENGTH = 3920;
-  const TRACK_SCALE = TRACK_TEMPLATE_LENGTH / WORLD.lapLength;
 
   const state = {
     running: false,
@@ -79,9 +102,9 @@
     goFlash: 0,
     sound: true,
     camera: 0,
-    selectedCar: 0,
-    lapCount: Number(localStorage.getItem('racing-v7.0-laps') || localStorage.getItem('racing-v6.9-laps') || localStorage.getItem('racing-v6.8-laps') || 3),
-    carTotal: Number(localStorage.getItem('racing-v7.0-cars') || localStorage.getItem('racing-v6.9-cars') || localStorage.getItem('racing-v6.8-cars') || 6),
+    selectedCar: Number(localStorage.getItem('neon-toy-car') || 4),
+    lapCount: Number(localStorage.getItem('neon-toy-laps') || 3),
+    carTotal: Number(localStorage.getItem('neon-toy-cars') || 6),
     rank: 1,
     currentLap: 1,
     lapProgress: 0,
@@ -89,43 +112,45 @@
     raceFinished: false,
     best: 0,
     distance: 0,
-    level: 1,
-    health: 100,
-    boost: 0,
     speed: 0,
-    car: { x: 0, y: 0.7, z: 6, yaw: 0, roll: 0, steer: 0, lateral: 0 },
-    traffic: [],
+    boost: 65,
+    shake: 0,
+    car: { x: 0, y: 1, z: 6, yaw: 0, roll: 0, steer: 0, lateral: 0 },
     aiCars: [],
     gates: [],
-    props: [],
     particles: [],
     lastTime: 0,
     fpsAccum: 0,
     fpsCount: 0,
-    fps: 60,
-    shake: 0,
-    crashedCooldown: 0
+    fps: 60
   };
 
   const input = {
     gas: false,
     brake: false,
+    nitro: false,
+    drift: false,
     left: false,
     right: false,
     pointerActive: false,
     pointerStartX: 0,
-    pointerLastX: 0,
-    touchSteer: 0,
-    touchDrift: false,
-    touchDriftHold: 0
+    touchSteer: 0
   };
+
+  function updateOrientationClass() {
+    const w = window.innerWidth || 0;
+    const h = window.innerHeight || 0;
+    const portrait = h > w && w <= 820;
+    document.documentElement.classList.toggle('is-portrait-mobile', portrait);
+    document.documentElement.classList.toggle('is-landscape-mobile', !portrait && h <= 560 && w <= 1180);
+  }
 
   function compileShader(type, source) {
     const shader = gl.createShader(type);
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      throw new Error(gl.getShaderInfoLog(shader));
+      throw new Error(gl.getShaderInfoLog(shader) || 'Shader compile failed');
     }
     return shader;
   }
@@ -138,16 +163,18 @@
     uniform mat4 uProj;
     uniform vec3 uColor;
     uniform vec3 uLightDir;
+    uniform float uGlow;
     varying vec3 vColor;
     varying float vFog;
     void main() {
       vec4 world = uModel * vec4(aPosition, 1.0);
-      vec3 n = normalize((uModel * vec4(aNormal, 0.0)).xyz);
-      float light = clamp(dot(n, normalize(uLightDir)) * 0.65 + 0.55, 0.24, 1.15);
-      vColor = uColor * light;
+      vec3 normal = normalize((uModel * vec4(aNormal, 0.0)).xyz);
+      float diffuse = max(dot(normal, normalize(uLightDir)), 0.0);
+      float light = 0.46 + diffuse * 0.62;
+      vColor = uColor * light + uColor * uGlow;
       vec4 viewPos = uView * world;
-      float d = length(viewPos.xyz);
-      vFog = clamp((d - 90.0) / 220.0, 0.0, 1.0);
+      float distanceToCamera = length(viewPos.xyz);
+      vFog = clamp((distanceToCamera - 105.0) / 235.0, 0.0, 1.0);
       gl_Position = uProj * viewPos;
     }
   `);
@@ -156,10 +183,11 @@
     precision mediump float;
     varying vec3 vColor;
     varying float vFog;
+    uniform vec3 uFogColor;
+    uniform float uAlpha;
     void main() {
-      vec3 fogColor = vec3(0.46, 0.72, 0.91);
-      vec3 c = mix(vColor, fogColor, vFog);
-      gl_FragColor = vec4(c, 1.0);
+      vec3 color = mix(vColor, uFogColor, vFog);
+      gl_FragColor = vec4(color, uAlpha);
     }
   `);
 
@@ -167,7 +195,9 @@
   gl.attachShader(program, vertexShader);
   gl.attachShader(program, fragmentShader);
   gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    throw new Error(gl.getProgramInfoLog(program) || 'Program link failed');
+  }
   gl.useProgram(program);
 
   const loc = {
@@ -177,17 +207,21 @@
     uView: gl.getUniformLocation(program, 'uView'),
     uProj: gl.getUniformLocation(program, 'uProj'),
     uColor: gl.getUniformLocation(program, 'uColor'),
-    uLightDir: gl.getUniformLocation(program, 'uLightDir')
+    uLightDir: gl.getUniformLocation(program, 'uLightDir'),
+    uFogColor: gl.getUniformLocation(program, 'uFogColor'),
+    uGlow: gl.getUniformLocation(program, 'uGlow'),
+    uAlpha: gl.getUniformLocation(program, 'uAlpha')
   };
 
   const cubeData = new Float32Array([
-    -1,-1, 1, 0,0,1,  1,-1, 1, 0,0,1,  1, 1, 1, 0,0,1,  -1,-1, 1, 0,0,1,  1, 1, 1, 0,0,1, -1, 1, 1, 0,0,1,
-     1,-1,-1, 0,0,-1, -1,-1,-1, 0,0,-1, -1, 1,-1, 0,0,-1,  1,-1,-1, 0,0,-1, -1, 1,-1, 0,0,-1, 1, 1,-1, 0,0,-1,
-    -1, 1, 1, 0,1,0,  1, 1, 1, 0,1,0,  1, 1,-1, 0,1,0,  -1, 1, 1, 0,1,0,  1, 1,-1, 0,1,0, -1, 1,-1, 0,1,0,
-    -1,-1,-1, 0,-1,0, 1,-1,-1, 0,-1,0, 1,-1, 1, 0,-1,0, -1,-1,-1, 0,-1,0, 1,-1, 1, 0,-1,0, -1,-1, 1, 0,-1,0,
-     1,-1, 1, 1,0,0,  1,-1,-1, 1,0,0,  1, 1,-1, 1,0,0,  1,-1, 1, 1,0,0,  1, 1,-1, 1,0,0, 1, 1, 1, 1,0,0,
-    -1,-1,-1, -1,0,0, -1,-1, 1, -1,0,0, -1, 1, 1, -1,0,0, -1,-1,-1, -1,0,0, -1, 1, 1, -1,0,0, -1, 1,-1, -1,0,0
+    -1,-1, 1, 0,0,1,  1,-1, 1, 0,0,1,  1, 1, 1, 0,0,1, -1,-1, 1, 0,0,1,  1, 1, 1, 0,0,1, -1, 1, 1, 0,0,1,
+     1,-1,-1, 0,0,-1,-1,-1,-1, 0,0,-1,-1, 1,-1, 0,0,-1, 1,-1,-1, 0,0,-1,-1, 1,-1, 0,0,-1, 1, 1,-1, 0,0,-1,
+    -1, 1, 1, 0,1,0,  1, 1, 1, 0,1,0,  1, 1,-1, 0,1,0,-1, 1, 1, 0,1,0,  1, 1,-1, 0,1,0,-1, 1,-1, 0,1,0,
+    -1,-1,-1, 0,-1,0, 1,-1,-1, 0,-1,0, 1,-1, 1, 0,-1,0,-1,-1,-1, 0,-1,0, 1,-1, 1, 0,-1,0,-1,-1, 1, 0,-1,0,
+     1,-1, 1, 1,0,0,  1,-1,-1, 1,0,0,  1, 1,-1, 1,0,0, 1,-1, 1, 1,0,0,  1, 1,-1, 1,0,0, 1, 1, 1, 1,0,0,
+    -1,-1,-1,-1,0,0, -1,-1, 1,-1,0,0, -1, 1, 1,-1,0,0,-1,-1,-1,-1,0,0, -1, 1, 1,-1,0,0,-1, 1,-1,-1,0,0
   ]);
+
   const cubeBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, cubeBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, cubeData, gl.STATIC_DRAW);
@@ -197,9 +231,11 @@
   gl.vertexAttribPointer(loc.aNormal, 3, gl.FLOAT, false, 24, 12);
 
   gl.enable(gl.DEPTH_TEST);
-  // 關閉背面剔除，讓低階手機與不同 GPU 上的方塊模型更穩定顯示。
-  gl.clearColor(...palette.sky);
-  gl.uniform3f(loc.uLightDir, -0.45, 0.9, 0.38);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.clearColor(...COLORS.sky, 1);
+  gl.uniform3f(loc.uLightDir, -0.38, 0.92, 0.35);
+  gl.uniform3f(loc.uFogColor, ...COLORS.fog);
 
   const proj = new Float32Array(16);
   const view = new Float32Array(16);
@@ -214,15 +250,22 @@
   }
 
   function lookAt(out, eye, target, up) {
-    let zx = eye[0] - target[0], zy = eye[1] - target[1], zz = eye[2] - target[2];
-    let len = Math.hypot(zx, zy, zz) || 1; zx /= len; zy /= len; zz /= len;
+    let zx = eye[0] - target[0];
+    let zy = eye[1] - target[1];
+    let zz = eye[2] - target[2];
+    let len = Math.hypot(zx, zy, zz) || 1;
+    zx /= len; zy /= len; zz /= len;
+
     let xx = up[1] * zz - up[2] * zy;
     let xy = up[2] * zx - up[0] * zz;
     let xz = up[0] * zy - up[1] * zx;
-    len = Math.hypot(xx, xy, xz) || 1; xx /= len; xy /= len; xz /= len;
+    len = Math.hypot(xx, xy, xz) || 1;
+    xx /= len; xy /= len; xz /= len;
+
     const yx = zy * xz - zz * xy;
     const yy = zz * xx - zx * xz;
     const yz = zx * xy - zy * xx;
+
     out[0] = xx; out[1] = yx; out[2] = zx; out[3] = 0;
     out[4] = xy; out[5] = yy; out[6] = zy; out[7] = 0;
     out[8] = xz; out[9] = yz; out[10] = zz; out[11] = 0;
@@ -232,32 +275,50 @@
     out[15] = 1;
   }
 
-  function setBoxModel(out, x, y, z, w, h, d, yaw = 0) {
-    const c = Math.cos(yaw), s = Math.sin(yaw);
-    const sx = w * 0.5, sy = h * 0.5, sz = d * 0.5;
-    out[0] = c * sx; out[1] = 0; out[2] = -s * sx; out[3] = 0;
-    out[4] = 0; out[5] = sy; out[6] = 0; out[7] = 0;
-    out[8] = s * sz; out[9] = 0; out[10] = c * sz; out[11] = 0;
+  function setModel(out, x, y, z, sx, sy, sz, yaw = 0, pitch = 0, roll = 0) {
+    const cy = Math.cos(yaw), syaw = Math.sin(yaw);
+    const cp = Math.cos(pitch), sp = Math.sin(pitch);
+    const cr = Math.cos(roll), sr = Math.sin(roll);
+
+    const r00 = cy * cr + syaw * sp * sr;
+    const r01 = sr * cp;
+    const r02 = -syaw * cr + cy * sp * sr;
+    const r10 = -cy * sr + syaw * sp * cr;
+    const r11 = cr * cp;
+    const r12 = sr * syaw + cy * sp * cr;
+    const r20 = syaw * cp;
+    const r21 = -sp;
+    const r22 = cy * cp;
+
+    out[0] = r00 * sx; out[1] = r01 * sx; out[2] = r02 * sx; out[3] = 0;
+    out[4] = r10 * sy; out[5] = r11 * sy; out[6] = r12 * sy; out[7] = 0;
+    out[8] = r20 * sz; out[9] = r21 * sz; out[10] = r22 * sz; out[11] = 0;
     out[12] = x; out[13] = y; out[14] = z; out[15] = 1;
   }
 
-  function drawBox(x, y, z, w, h, d, yaw, color) {
-    setBoxModel(model, x, y, z, w, h, d, yaw || 0);
+  function drawBox(x, y, z, w, h, d, yaw, color, glow = 0, alpha = 1, pitch = 0, roll = 0) {
+    setModel(model, x, y, z, w * 0.5, h * 0.5, d * 0.5, yaw, pitch, roll);
     gl.uniformMatrix4fv(loc.uModel, false, model);
     gl.uniform3f(loc.uColor, color[0], color[1], color[2]);
+    gl.uniform1f(loc.uGlow, glow);
+    gl.uniform1f(loc.uAlpha, alpha);
     gl.drawArrays(gl.TRIANGLES, 0, 36);
   }
 
-  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-  function lerp(a, b, t) { return a + (b - a) * t; }
-  function smoothstep(edge0, edge1, x) { const t = clamp((x - edge0) / (edge1 - edge0), 0, 1); return t * t * (3 - 2 * t); }
+  function drawLocalBox(cx, cy, cz, lx, ly, lz, w, h, d, yaw, color, glow = 0, alpha = 1, yawOffset = 0, pitch = 0, roll = 0) {
+    const cs = Math.cos(yaw), sn = Math.sin(yaw);
+    const x = cx + lx * cs + lz * sn;
+    const z = cz - lx * sn + lz * cs;
+    drawBox(x, cy + ly, z, w, h, d, yaw + yawOffset, color, glow, alpha, pitch, roll);
+  }
 
-  function lapZ(z) {
-    return ((z % WORLD.lapLength) + WORLD.lapLength) % WORLD.lapLength;
+  function seededNoise(n) {
+    const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453123;
+    return x - Math.floor(x);
   }
 
   function trackT(z) {
-    return lapZ(z) * TRACK_SCALE;
+    return mod(z, WORLD.lapLength);
   }
 
   function plateau(t, start, riseEnd, fallStart, end, amount) {
@@ -265,116 +326,101 @@
   }
 
   function roadCenter(z) {
-    // V6.3：專家 GP 賽道。用多段 plateau 疊出大圈彎、反向髮夾、窄橋 chicane 與終點前技術區。
     const t = trackT(z);
     let c = 0;
-
-    // 1. 起跑後中速 S：先右再左，讓開局就需要修線。
-    c += plateau(t, 120, 245, 360, 500, 13.0);
-    c += plateau(t, 425, 570, 705, 850, -18.0);
-
-    // 2. 超長外圈右彎：維持很久的大半徑彎，AI 會走內線。
-    c += plateau(t, 760, 1040, 1500, 1790, 41.0);
-    c += Math.sin(clamp((t - 790) / 890, 0, 1) * Math.PI) * 10.5;
-
-    // 3. 盲坡後左收回，路線會快速往內切。
-    c += plateau(t, 1680, 1830, 1975, 2150, -26.0);
-
-    // 4. 技術區：右、左、右、左，適合大角度滑動漂移。
-    c += plateau(t, 2080, 2185, 2265, 2365, 19.5);
-    c += plateau(t, 2300, 2405, 2505, 2615, -24.5);
-    c += plateau(t, 2560, 2665, 2760, 2875, 22.0);
-    c += plateau(t, 2810, 2920, 3020, 3135, -20.5);
-
-    // 5. 新增高速 chicane：高速左切、立刻右髮夾，再回正。
-    c += plateau(t, 3110, 3185, 3245, 3330, 16.0);
-    c += plateau(t, 3260, 3320, 3395, 3485, -24.0);
-    c += plateau(t, 3430, 3490, 3548, 3618, 15.0);
-
-    // 6. 終點前大圈左彎，先放大再收窄，形成最後追擊區。
-    c += plateau(t, 3520, 3660, 3830, 3910, -34.0);
-
-    // 7. 細微高頻擺動：直線也需要微調，不會像軌道一樣平。
-    c += Math.sin(z * 0.030) * 0.55 + Math.sin(z * 0.012) * 0.65;
-    c += Math.sin(z * 0.085) * 0.42 * (1 + Math.sin(z * 0.003) * 0.28);
+    c += plateau(t, 100, 250, 390, 535, 13);
+    c += plateau(t, 430, 600, 720, 870, -18);
+    c += plateau(t, 790, 1060, 1390, 1660, 39);
+    c += Math.sin(clamp((t - 820) / 760, 0, 1) * Math.PI) * 8;
+    c += plateau(t, 1530, 1690, 1870, 2050, -26);
+    c += plateau(t, 1990, 2110, 2210, 2320, 18);
+    c += plateau(t, 2260, 2370, 2470, 2580, -22);
+    c += plateau(t, 2500, 2600, 2700, 2800, 18);
+    c += plateau(t, 2730, 2825, 2910, 2995, -25);
+    c += Math.sin(z * 0.018) * 0.34;
     return c;
   }
 
   function roadWidthAt(z) {
     const t = trackT(z);
-    let w = WORLD.roadWidth;
-
-    // 大外圈加寬，讓高速走線有空間。
-    w += plateau(t, 720, 920, 1580, 1840, 10.0);
-
-    // 盲坡橋與技術區收窄，產生壓迫感。
-    w -= plateau(t, 1550, 1700, 1980, 2180, 9.0);
-    w -= plateau(t, 2090, 2200, 2320, 2435, 5.5);
-    w += plateau(t, 2350, 2470, 2640, 2790, 3.5);
-    w -= plateau(t, 2790, 2900, 3060, 3185, 7.0);
-
-    // 新增極窄 chicane，會要求玩家提早轉向與降速。
-    w -= plateau(t, 3160, 3240, 3330, 3415, 12.0);
-    w += plateau(t, 3420, 3500, 3590, 3660, 4.0);
-
-    // 終點前大圈左彎放寬，提供超車空間。
-    w += plateau(t, 3540, 3670, 3845, 3918, 7.0);
-
-    return clamp(w, 19, 45);
+    let width = WORLD.roadWidth;
+    width += plateau(t, 760, 950, 1460, 1720, 7.5);
+    width -= plateau(t, 1520, 1690, 1910, 2080, 7.0);
+    width -= plateau(t, 2240, 2360, 2520, 2640, 4.5);
+    width -= plateau(t, 2740, 2810, 2900, 2980, 7.5);
+    return clamp(width, 22, 42);
   }
 
   function roadHeight(z) {
     const t = trackT(z);
-    let h = 0;
-
-    // 丘陵與盲坡：讓視野、速度感、AI 剎車點都有變化。
-    h += plateau(t, 470, 710, 1080, 1280, 1.25);      // 緩上坡進大右彎
-    h += plateau(t, 1000, 1170, 1500, 1660, 2.15);    // 大圈彎高點
-    h += plateau(t, 1560, 1710, 1920, 2110, 3.15);    // 盲坡橋面
-    h -= plateau(t, 1900, 2050, 2250, 2410, 0.95);    // 出橋下坡
-    h += plateau(t, 2360, 2490, 2680, 2820, 1.05);    // 技術彎小丘
-
-    // V6.3 新增：陡上後立刻下坡接急彎，變化比 V6.0 更明顯。
-    h += plateau(t, 3120, 3200, 3280, 3370, 3.20);
-    h -= plateau(t, 3380, 3450, 3550, 3650, 2.65);
-    h += plateau(t, 3660, 3760, 3870, 3918, 1.05);
-
-    // 小幅細節起伏，讓畫面有路面質感但不過度晃動。
-    h += Math.sin(z * 0.010) * 0.12 + Math.sin(z * 0.023) * 0.055;
+    let h = 7.5;
+    h += plateau(t, 430, 690, 1040, 1250, 2.0);
+    h += plateau(t, 950, 1160, 1440, 1640, 3.1);
+    h += plateau(t, 1510, 1690, 1900, 2070, 5.2);
+    h -= plateau(t, 1900, 2070, 2250, 2410, 1.8);
+    h += plateau(t, 2440, 2580, 2730, 2840, 2.0);
+    h += plateau(t, 2760, 2840, 2910, 2995, 4.0);
+    h += Math.sin(z * 0.013) * 0.12;
     return h;
   }
 
   function roadTangentYaw(z) {
-    const a = roadCenter(z - 3), b = roadCenter(z + 3);
-    return Math.atan2(b - a, 6);
-  }
-  function roadLaneX(z, lane) {
-    return roadCenter(z) + lane;
+    const a = roadCenter(z - 4);
+    const b = roadCenter(z + 4);
+    return Math.atan2(b - a, 8);
   }
 
-  function drawLocalBox(c, y, z, localX, localZ, w, h, d, yaw, color, yawOffset = 0) {
-    const cs = Math.cos(yaw), sn = Math.sin(yaw);
-    drawBox(c + localX * cs + localZ * sn, y, z - localX * sn + localZ * cs, w, h, d, yaw + yawOffset, color);
+  function curveStrength(z) {
+    const y1 = roadTangentYaw(z + 10);
+    const y2 = roadTangentYaw(z + 66);
+    return Math.abs(y2 - y1) + Math.abs(roadCenter(z + 80) - roadCenter(z + 20)) / 65;
   }
 
-  function seededNoise(n) {
-    const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
-    return x - Math.floor(x);
-  }
-
-  function bestKey(laps = state.lapCount) {
-    return `racing-v6.8-best-${laps}-${state.carTotal}`;
-  }
-
-  function loadBestForLaps(laps = state.lapCount) {
-    return Number(localStorage.getItem(bestKey(laps)) || 0);
+  function bestKey() {
+    return `neon-toy-best-${state.lapCount}-${state.carTotal}`;
   }
 
   function formatTime(seconds) {
     if (!seconds || seconds <= 0) return '0:00.0';
-    const m = Math.floor(seconds / 60);
-    const s = seconds - m * 60;
-    return `${m}:${s.toFixed(1).padStart(4, '0')}`;
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds - minutes * 60;
+    return `${minutes}:${secs.toFixed(1).padStart(4, '0')}`;
+  }
+
+  function generateWorld() {
+    state.aiCars = [];
+    state.gates = [];
+    const totalCars = clamp(Math.round(state.carTotal), 1, 6);
+    state.carTotal = totalCars;
+    const lanes = [5.5, -5.5, 0, 10.5, -10.5];
+
+    for (let i = 1; i < totalCars; i++) {
+      const z = 6 - Math.ceil(i / 2) * 5;
+      const lane = lanes[(i - 1) % lanes.length];
+      const skinIndex = (i + 1) % CAR_SKINS.length;
+      const elite = totalCars >= 5 && i >= totalCars - 2;
+      state.aiCars.push({
+        id: i,
+        skinIndex,
+        lane,
+        x: roadCenter(z) + lane,
+        y: roadHeight(z) + 1.0,
+        z,
+        yaw: roadTangentYaw(z),
+        speed: 0,
+        distance: 0,
+        phase: seededNoise(200 + i) * Math.PI * 2,
+        skill: elite ? (i === totalCars - 1 ? 1.18 : 1.12) : 0.96 + seededNoise(300 + i) * 0.12,
+        aggression: elite ? 1.10 : 0.68 + seededNoise(400 + i) * 0.25,
+        finished: false,
+        finishTime: 0
+      });
+    }
+
+    const total = WORLD.lapLength * state.lapCount;
+    for (let z = 170; z < total; z += 230) {
+      state.gates.push({ z: z + (seededNoise(z) - 0.5) * 36, taken: false });
+    }
   }
 
   function resetGame() {
@@ -382,386 +428,92 @@
     state.countingDown = false;
     state.countdown = 0;
     state.goFlash = 0;
-    if (UI.countdown) { UI.countdown.hidden = true; UI.countdown.classList.remove('go'); }
-    state.distance = 0;
-    state.level = 1;
-    state.currentLap = 1;
-    state.lapProgress = 0;
     state.raceTime = 0;
     state.raceFinished = false;
+    state.currentLap = 1;
+    state.lapProgress = 0;
+    state.distance = 0;
     state.rank = 1;
-    state.best = loadBestForLaps();
-    state.health = 100;
-    state.boost = 0;
     state.speed = 0;
+    state.boost = 65;
     state.shake = 0;
-    state.crashedCooldown = 0;
-    state.car.x = roadCenter(0);
-    state.car.y = roadHeight(6) + 0.82;
+    state.best = Number(localStorage.getItem(bestKey()) || 0);
+    state.particles.length = 0;
+    state.car.x = roadCenter(6);
+    state.car.y = roadHeight(6) + 1.02;
     state.car.z = 6;
-    state.car.yaw = 0;
+    state.car.yaw = roadTangentYaw(6);
     state.car.roll = 0;
     state.car.steer = 0;
     state.car.lateral = 0;
-    state.traffic = [];
-    state.aiCars = [];
-    state.gates = [];
-    state.props = [];
-    state.particles = [];
     generateWorld();
-    UI.notice.classList.remove('hidden');
-    UI.startBtn.textContent = '啟動';
+    if (UI.countdown) {
+      UI.countdown.hidden = true;
+      UI.countdown.classList.remove('go');
+    }
+    UI.notice?.classList.remove('hidden');
+    if (UI.startBtn) UI.startBtn.querySelector('span') ? UI.startBtn.querySelector('span').textContent = '啟動比賽' : UI.startBtn.textContent = '啟動比賽';
+    if (UI.noticeText) UI.noticeText.textContent = `V8.2：車子、賽道、護欄、燈光與場景已改成霓虹低多邊形玩具風；${state.lapCount} 圈、${state.carTotal} 台車。`;
     updateCameraButton();
     updateUI();
   }
 
-  function generateWorld() {
-    // V6.3：高難度 AI GP，路線更緊湊、賽道略窄、比賽時間更短；碰撞扣血仍關閉。
-    state.traffic = [];
-    state.aiCars = [];
-    state.gates = [];
-    state.props = [];
-
-    const total = WORLD.lapLength * state.lapCount;
-    const gateCount = Math.max(22, Math.ceil(total / 185) + 6);
-    for (let i = 0; i < gateCount; i++) {
-      // 能量門放在出彎與坡頂之後，鼓勵玩家切好線再加速。
-      const z = 160 + i * 185 + (i % 4 === 0 ? 34 : i % 3 === 0 ? -20 : 0);
-      state.gates.push({ z, taken: false });
-    }
-
-    const propCount = Math.ceil(total / 18);
-    for (let i = 0; i < propCount; i++) {
-      const z = 18 + i * 22 + seededNoise(i) * 8;
-      const side = seededNoise(i + 10) > 0.5 ? 1 : -1;
-      const typeRoll = seededNoise(i + 20);
-      const t = trackT(z);
-      let type = typeRoll > 0.88 ? 'house' : typeRoll > 0.74 ? 'rock' : 'tree';
-      if ((t > 120 && t < 270) || (t > 390 && t < 620) || (t > 760 && t < 1120) || (t > 1560 && t < 2030) || (t > 2080 && t < 2420) || (t > 2550 && t < 2880) || (t > 3120 && t < 3480) || (t > 3540 && t < 3860)) type = 'chevron';
-      if (typeRoll > 0.935) type = 'grandstand';
-      if (typeRoll > 0.962) type = 'banner';
-      const width = roadWidthAt(z);
-      const offset = width * 0.5 + 8 + seededNoise(i + 30) * 25;
-      state.props.push({ z, side, type, offset, scale: 0.75 + seededNoise(i + 40) * 1.45 });
-    }
-
-    generateAICars();
-
-    const keyCorners = [145, 245, 420, 570, 770, 940, 1170, 1560, 1710, 1880, 2095, 2245, 2390, 2570, 2720, 2890, 3140, 3265, 3375, 3545, 3705, 3840].map(v => v / TRACK_SCALE);
-    for (let lap = 0; lap < state.lapCount; lap++) {
-      for (const k of keyCorners) {
-        const z = lap * WORLD.lapLength + k;
-        const side = roadCenter(z + 24) > roadCenter(z - 24) ? -1 : 1;
-        state.props.push({ z, side, type: 'chevron', offset: roadWidthAt(z) * 0.5 + 5.8, scale: 1.25 });
-      }
-    }
-  }
-
-  function trafficColor(i) {
-    const colors = [[0.95,0.9,0.82],[0.95,0.72,0.1],[0.07,0.22,0.70],[0.04,0.04,0.05],[0.75,0.08,0.08],[0.12,0.55,0.25]];
-    return colors[i % colors.length];
-  }
-
-  function generateAICars() {
-    state.aiCars = [];
-    const totalCars = clamp(Math.round(state.carTotal || 1), 1, 6);
-    state.carTotal = totalCars;
-    const gridOffsets = [5.8, -5.8, 0, 11.2, -11.2];
-    for (let i = 1; i < totalCars; i++) {
-      const z = 6 - Math.ceil(i / 2) * 4.2;
-      const lane = gridOffsets[(i - 1) % gridOffsets.length];
-      const skinIndex = i % CAR_SKINS.length;
-      const tier = i / Math.max(1, totalCars - 1);
-      state.aiCars.push({
-        id: i,
-        skinIndex,
-        x: roadCenter(z) + lane,
-        y: roadHeight(z) + 0.82,
-        z,
-        yaw: roadTangentYaw(z),
-        lane,
-        speed: 0,
-        distance: 0,
-        // V6.8：AI 再強化。最後一台是王牌，倒數第二台是勁敵，一般 AI 也更積極。
-        ace: totalCars >= 5 && i >= totalCars - 2,
-        champion: totalCars >= 5 && i === totalCars - 1,
-        rival: totalCars >= 5 && i === totalCars - 2,
-        skill: totalCars >= 5 && i === totalCars - 1
-          ? 1.27
-          : totalCars >= 5 && i === totalCars - 2
-            ? 1.22
-            : clamp(0.98 + tier * 0.12 + seededNoise(300 + i) * 0.06, 0.96, 1.12),
-        aggression: totalCars >= 5 && i === totalCars - 1
-          ? 1.18
-          : totalCars >= 5 && i === totalCars - 2
-            ? 1.10
-            : clamp(0.54 + tier * 0.32 + seededNoise(510 + i) * 0.15, 0.52, 0.96),
-        phase: seededNoise(420 + i) * Math.PI * 2,
-        overtakeBias: seededNoise(620 + i) > 0.5 ? 1 : -1,
-        finished: false,
-        finishTime: 0
-      });
-    }
-  }
-
-  function updateAICars(dt) {
-    const totalRaceDistance = WORLD.lapLength * state.lapCount;
-    const player = state.car;
-    for (const ai of state.aiCars) {
-      if (ai.finished) continue;
-
-      // 看更遠，提前為髮夾、窄路、盲坡煞車。
-      const nearZ = ai.z + 18;
-      const futureZ = ai.z + 68;
-      const farZ = ai.z + 108;
-      const curveNear = Math.abs(roadCenter(nearZ) - roadCenter(ai.z)) / 22 + Math.abs(roadTangentYaw(nearZ)) * 1.05;
-      const curveFuture = Math.abs(roadCenter(farZ) - roadCenter(nearZ)) / 34 + Math.abs(roadTangentYaw(futureZ)) * 1.25;
-      const curveStrength = curveNear * 0.65 + curveFuture * 0.92;
-      const widthNow = roadWidthAt(ai.z);
-      const widthFuture = roadWidthAt(futureZ);
-      const narrowPenalty = widthFuture < 28 ? 10.5 : widthFuture < 32 ? 6.5 : 0;
-      const hillDelta = roadHeight(ai.z + 42) - roadHeight(ai.z - 10);
-      const hillPenalty = Math.max(0, hillDelta) * 4.1;
-      const downhillBonus = Math.max(0, -hillDelta) * 2.0;
-
-      // 靠近玩家且速度更快時，AI 會更積極超車；沒有碰撞扣血，只做視覺與名次壓力。
-      const gapToPlayer = player.z - ai.z;
-      const playerLane = player.x - roadCenter(player.z);
-      const canAttack = gapToPlayer > -22 && gapToPlayer < 96 && ai.speed >= state.speed * 0.86 && state.carTotal > 1;
-      const aceScale = ai.champion ? 1.0 : ai.rival ? 0.82 : 0.0;
-      const attackBoost = canAttack ? (ai.ace ? (8.6 + aceScale * 1.8) : 5.8) * ai.aggression : 0;
-      const raceBreathing = Math.sin(state.raceTime * (1.02 + ai.aggression * 0.13) + ai.phase) * (ai.champion ? 2.15 : ai.rival ? 1.85 : 1.35);
-      const startBoost = state.raceTime < 1.0 ? 0.86 : 1;
-      const base = (ai.champion ? 124.5 : ai.rival ? 122.0 : 113.5) * ai.skill;
-      const curveBrake = curveStrength * (ai.champion ? 16.6 : ai.rival ? 17.2 : 20.2 - ai.aggression * 2.2);
-      const target = clamp((base - curveBrake - narrowPenalty * (ai.ace ? 0.76 : 0.98) - hillPenalty * (ai.ace ? 0.78 : 0.98) + downhillBonus * 0.96 + attackBoost + raceBreathing) * startBoost, 64, ai.champion ? 164 : ai.rival ? 158 : 146);
-      ai.speed = lerp(ai.speed, target, 1 - Math.pow(ai.champion ? 0.0048 : ai.rival ? 0.0058 : 0.0088, dt));
-      ai.z += ai.speed * dt * 0.78;
-      ai.distance = Math.max(0, ai.z - 6);
-
-      // 理想線：彎前靠外、彎中切內，再加上超車偏移。
-      const curveDir = Math.sign(roadCenter(futureZ) - roadCenter(ai.z + 4)) || Math.sign(roadTangentYaw(futureZ)) || 1;
-      const innerLane = -curveDir * (5.4 + ai.aggression * (ai.champion ? 1.85 : ai.rival ? 1.62 : 1.18));
-      const setupLane = curveDir * (ai.champion ? 2.85 : ai.rival ? 2.55 : 2.05) * smoothstep(0.10, 0.74, curveStrength);
-      let overtakeLane = 0;
-      if (canAttack) {
-        const passSide = Math.abs(playerLane) > 2.5 ? -Math.sign(playerLane) : ai.overtakeBias;
-        overtakeLane = passSide * ((ai.champion ? 7.0 : ai.rival ? 6.4 : 5.2) + ai.aggression * 1.70);
-      }
-      const laneWave = Math.sin(ai.z * 0.021 + ai.phase) * (ai.champion ? 0.18 : ai.rival ? 0.26 : 0.46 + (1.05 - ai.aggression) * 0.24);
-      const desiredLane = clamp(ai.lane * (ai.champion ? 0.09 : ai.rival ? 0.12 : 0.19) + innerLane * (ai.champion ? 0.68 : ai.rival ? 0.63 : 0.53) + setupLane + overtakeLane + laneWave, -widthNow * 0.405, widthNow * 0.405);
-      const desiredX = roadCenter(ai.z) + desiredLane;
-      ai.x = lerp(ai.x, desiredX, 1 - Math.pow(ai.champion ? 0.0028 : ai.rival ? 0.0034 : 0.0048, dt));
-      ai.y = roadHeight(ai.z) + 0.82;
-      ai.yaw = lerp(ai.yaw, roadTangentYaw(ai.z + 12) + (desiredX - ai.x) * 0.032, 1 - Math.pow(0.009, dt));
-
-      if (ai.distance >= totalRaceDistance) {
-        ai.finished = true;
-        ai.finishTime = state.raceTime;
-        ai.distance = totalRaceDistance;
-        ai.z = totalRaceDistance + 6;
-      }
-    }
-  }
-
-  function updateRank() {
-    const playerProgress = state.raceFinished ? WORLD.lapLength * state.lapCount : state.distance;
-    let faster = 0;
-    for (const ai of state.aiCars) {
-      if ((ai.finished ? WORLD.lapLength * state.lapCount : ai.distance) > playerProgress + 0.35) faster++;
-    }
-    state.rank = clamp(1 + faster, 1, state.carTotal);
-  }
-
   function startCountdown() {
-    if (state.running || state.countingDown || state.raceFinished) return;
+    if (state.running || state.countingDown) return;
+    if (state.raceFinished) resetGame();
     state.countingDown = true;
-    state.countdown = 3.15;
+    state.countdown = 3.2;
     state.goFlash = 0;
-    UI.notice.classList.add('hidden');
-    UI.startBtn.textContent = '倒數';
+    UI.notice?.classList.add('hidden');
     if (UI.countdown) {
       UI.countdown.hidden = false;
       UI.countdown.classList.remove('go');
       UI.countdown.textContent = '3';
     }
-    chord([280, 420], 0.08, 0.034);
+    chord([280, 420], 0.08, 0.03);
   }
 
-  function setRunning(next) {
-    if (next) {
-      startCountdown();
+  function finishRace() {
+    if (state.raceFinished) return;
+    state.raceFinished = true;
+    state.running = false;
+    state.speed = 0;
+    const previous = Number(localStorage.getItem(bestKey()) || 0);
+    const isBest = !previous || state.raceTime < previous;
+    if (isBest) localStorage.setItem(bestKey(), String(state.raceTime));
+    state.best = isBest ? state.raceTime : previous;
+    UI.notice?.classList.remove('hidden');
+    if (UI.noticeText) {
+      UI.noticeText.textContent = `完成 ${state.lapCount} 圈！成績 ${formatTime(state.raceTime)}，名次 ${state.rank}/${state.carTotal}${isBest ? '，刷新最佳成績！' : `，最佳 ${formatTime(previous)}。`}`;
+    }
+    const label = UI.startBtn?.querySelector('span');
+    if (label) label.textContent = '再跑一次';
+    else if (UI.startBtn) UI.startBtn.textContent = '再跑一次';
+    chord(isBest ? [620, 820, 1040] : [500, 650, 800], 0.18, 0.045);
+  }
+
+  function updateCountdown(dt) {
+    if (!state.countingDown) return;
+    state.countdown -= dt;
+    if (state.countdown > 0) {
+      const digit = Math.ceil(state.countdown);
+      if (UI.countdown && UI.countdown.textContent !== String(digit)) {
+        UI.countdown.textContent = String(digit);
+        beep(260 + digit * 80, 0.055, 'square', 0.035);
+      }
       return;
     }
-    state.running = false;
     state.countingDown = false;
-    state.countdown = 0;
-    state.goFlash = 0;
-    if (UI.countdown) { UI.countdown.hidden = true; UI.countdown.classList.remove('go'); }
-    UI.notice.classList.remove('hidden');
-    UI.startBtn.textContent = state.raceFinished ? '再跑一次' : '啟動';
-  }
-
-  function gameOver() {
-    state.running = false;
-    UI.notice.classList.remove('hidden');
-    UI.startBtn.textContent = '重開';
-    UI.noticeText.textContent = '按「啟動」重新挑戰，或換一個車色再出發。';
-    beep(90, 0.2, 'sawtooth', 0.08);
-  }
-
-  let audioCtx = null;
-  let masterGain = null;
-  let engineOsc = null;
-  let engineSub = null;
-  let engineGain = null;
-  let musicTimer = 0;
-  let musicStep = 0;
-  const MUSIC_PATTERN = [0, 3, 7, 10, 7, 3, 5, 8, 12, 8, 5, 2, 0, 5, 7, 12];
-
-  function ensureAudio() {
-    try {
-      audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      if (!masterGain) {
-        masterGain = audioCtx.createGain();
-        masterGain.gain.value = 0.32;
-        masterGain.connect(audioCtx.destination);
-      }
-      return true;
-    } catch (_) {
-      return false;
+    state.running = true;
+    state.goFlash = 0.7;
+    if (UI.countdown) {
+      UI.countdown.textContent = 'GO!';
+      UI.countdown.classList.add('go');
     }
+    chord([520, 780, 1040], 0.12, 0.04);
   }
 
-  function tone(freq = 220, dur = 0.05, type = 'sine', gain = 0.04, delay = 0) {
-    if (!state.sound || !ensureAudio()) return;
-    const t = audioCtx.currentTime + delay;
-    const osc = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    osc.frequency.setValueAtTime(freq, t);
-    osc.type = type;
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), t + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    osc.connect(g).connect(masterGain);
-    osc.start(t);
-    osc.stop(t + dur + 0.02);
-  }
-
-  function beep(freq = 220, dur = 0.05, type = 'sine', gain = 0.04) {
-    tone(freq, dur, type, gain);
-    if (freq > 420) tone(freq * 1.5, dur * 0.72, 'triangle', gain * 0.34, 0.01);
-  }
-
-  function chord(freqs, dur = 0.12, gain = 0.035) {
-    freqs.forEach((freq, i) => tone(freq, dur + i * 0.018, i ? 'triangle' : 'square', gain * (i ? 0.58 : 1), i * 0.018));
-  }
-
-  function startEngineLoop() {
-    if (!state.sound || !ensureAudio() || engineOsc) return;
-    engineGain = audioCtx.createGain();
-    engineGain.gain.value = 0.0001;
-    engineGain.connect(masterGain);
-    engineOsc = audioCtx.createOscillator();
-    engineSub = audioCtx.createOscillator();
-    engineOsc.type = 'sawtooth';
-    engineSub.type = 'triangle';
-    engineOsc.frequency.value = 72;
-    engineSub.frequency.value = 36;
-    engineOsc.connect(engineGain);
-    engineSub.connect(engineGain);
-    engineOsc.start();
-    engineSub.start();
-  }
-
-  function stopEngineLoop() {
-    try {
-      if (engineOsc) engineOsc.stop();
-      if (engineSub) engineSub.stop();
-    } catch (_) {}
-    engineOsc = null;
-    engineSub = null;
-    engineGain = null;
-  }
-
-  function updateAudio(dt) {
-    if (!state.sound) { stopEngineLoop(); return; }
-    if (!audioCtx || !masterGain) return;
-    if (audioCtx.state === 'suspended') return;
-    startEngineLoop();
-    const now = audioCtx.currentTime;
-    const moving = state.running || state.countingDown || state.goFlash > 0;
-    const speed01 = clamp(state.speed / 126, 0, 1);
-    if (engineGain && engineOsc && engineSub) {
-      const engineVolume = moving ? 0.020 + speed01 * 0.040 + (input.gas ? 0.012 : 0) : 0.0001;
-      engineGain.gain.setTargetAtTime(engineVolume, now, 0.055);
-      engineOsc.frequency.setTargetAtTime(58 + speed01 * 112 + (input.gas ? 12 : 0), now, 0.045);
-      engineSub.frequency.setTargetAtTime(29 + speed01 * 52, now, 0.06);
-    }
-
-    if (!state.running) return;
-    musicTimer -= dt;
-    if (musicTimer <= 0) {
-      const step = MUSIC_PATTERN[musicStep % MUSIC_PATTERN.length];
-      const base = 98;
-      const freq = base * Math.pow(2, step / 12);
-      tone(freq, 0.065, musicStep % 4 === 0 ? 'square' : 'triangle', 0.010 + speed01 * 0.006);
-      if (musicStep % 4 === 0) tone(base * 0.5, 0.09, 'sawtooth', 0.010);
-      if (state.boost > 18 && musicStep % 2 === 0) tone(freq * 2, 0.045, 'triangle', 0.007);
-      musicStep += 1;
-      musicTimer = state.boost > 18 ? 0.165 : 0.215;
-    }
-  }
-
-  function setViewportVars() {
-    const vv = window.visualViewport;
-    const h = Math.round((vv && vv.height) || window.innerHeight || document.documentElement.clientHeight || 0);
-    const w = Math.round((vv && vv.width) || window.innerWidth || document.documentElement.clientWidth || 0);
-    if (h > 0) document.documentElement.style.setProperty('--app-height', `${h}px`);
-    if (w > 0) document.documentElement.style.setProperty('--app-width', `${w}px`);
-  }
-
-  function resize() {
-    setViewportVars();
-    updateOrientationClass();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const rect = canvas.getBoundingClientRect();
-    const cssW = Math.max(1, rect.width || canvas.clientWidth || window.innerWidth);
-    const cssH = Math.max(1, rect.height || canvas.clientHeight || window.innerHeight);
-    const w = Math.floor(cssW * dpr);
-    const h = Math.floor(cssH * dpr);
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w;
-      canvas.height = h;
-      gl.viewport(0, 0, w, h);
-      perspective(proj, Math.PI / 3.18, w / h, 0.08, 430);
-      gl.uniformMatrix4fv(loc.uProj, false, proj);
-    }
-  }
-
-  function update(dt) {
-    if (state.countingDown) {
-      state.countdown -= dt;
-      const n = Math.ceil(Math.max(0, state.countdown));
-      if (UI.countdown) UI.countdown.textContent = n > 0 ? String(n) : 'GO!';
-      if (state.countdown <= 0) {
-        state.countingDown = false;
-        state.running = true;
-        state.goFlash = 0.58;
-        UI.startBtn.textContent = '暫停';
-        if (UI.countdown) { UI.countdown.hidden = false; UI.countdown.classList.add('go'); UI.countdown.textContent = 'GO!'; }
-        chord([520, 780, 1040], 0.13, 0.050);
-      } else if (Math.abs(state.countdown - Math.round(state.countdown)) < dt * 0.65) {
-        chord([280 + n * 52, 420 + n * 56], 0.075, 0.028);
-      }
-      state.speed = 0;
-      return;
-    }
-    if (state.goFlash > 0) {
-      state.goFlash -= dt;
-      if (state.goFlash <= 0 && UI.countdown) UI.countdown.hidden = true;
-    }
+  function updatePlayer(dt) {
     if (!state.running) {
       state.speed *= Math.pow(0.90, dt * 60);
       return;
@@ -770,176 +522,539 @@
     const skin = CAR_SKINS[state.selectedCar];
     const car = state.car;
     state.raceTime += dt;
-    const roadC = roadCenter(car.z);
-    car.y = roadHeight(car.z) + 0.82;
+
     const keyboardSteer = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     const targetSteer = clamp(keyboardSteer + input.touchSteer, -1, 1);
-    car.steer = lerp(car.steer, targetSteer, 1 - Math.pow(0.000035, dt));
+    car.steer = lerp(car.steer, targetSteer, 1 - Math.pow(0.00008, dt));
 
-    // V6.6：極速維持約 320 km/h，加速反應提高，起跑與出彎補油更快。
-    const maxSpeed = skin.max + state.boost * 0.16;
+    const nitroActive = input.nitro && input.gas && state.boost > 1;
+    const maxSpeed = skin.max + (nitroActive ? 19 : 0);
     if (input.gas) state.speed += skin.accel * dt;
-    else state.speed -= 18 * dt;
-    if (input.brake) state.speed -= 72 * dt;
-    if (state.boost > 1 && input.gas) state.speed += 16 * dt;
+    else state.speed -= 17 * dt;
+    if (input.brake && !input.drift) state.speed -= 74 * dt;
+    if (nitroActive) {
+      state.speed += 34 * dt;
+      state.boost -= 25 * dt;
+      spawnNitroParticles(car.x, car.y, car.z, car.yaw, 2);
+    } else {
+      state.boost += 4.2 * dt;
+    }
+    state.boost = clamp(state.boost, 0, 100);
 
-    // V6.3：坡度影響速度。上坡會吃力，下坡會自然變快，但 km/h 顯示仍維持合理。
     const slope = roadHeight(car.z + 18) - roadHeight(car.z - 10);
-    state.speed += clamp(-slope * 7.0, -12.0, 10.0) * dt;
+    state.speed += clamp(-slope * 5.5, -9, 8) * dt;
     state.speed = clamp(state.speed, 0, maxSpeed);
-    state.boost = clamp(state.boost - dt * (input.gas ? 8 : 4), 0, 100);
 
-    const curveYaw = roadTangentYaw(car.z + 10);
-    input.touchDriftHold = Math.max(0, input.touchDriftHold - dt);
-    const touchDrift = input.pointerActive && (Math.abs(input.touchSteer) > 0.90 || input.touchDriftHold > 0);
-    const drift = (input.brake || touchDrift) && Math.abs(car.steer) > 0.40 && state.speed > 38;
-    const lateralPower = (5.55 + state.speed * 0.068) * skin.grip * (drift ? 1.22 : 1);
-    car.lateral += car.steer * lateralPower * dt;
-    car.lateral *= Math.pow(drift ? 0.935 : 0.73, dt * 60);
+    const drifting = (input.drift || input.brake) && Math.abs(car.steer) > 0.25 && state.speed > 35;
+    const steerScale = 5.6 + state.speed * 0.071;
+    car.lateral += car.steer * steerScale * skin.grip * (drifting ? 1.24 : 1) * dt;
+    car.lateral *= Math.pow(drifting ? 0.943 : 0.74, dt * 60);
     car.x += car.lateral * dt;
     car.z += state.speed * dt * 0.78;
-    state.distance = Math.max(0, car.z - 6);
-    const totalRaceDistance = WORLD.lapLength * state.lapCount;
-    state.currentLap = clamp(Math.floor(state.distance / WORLD.lapLength) + 1, 1, state.lapCount);
-    state.lapProgress = clamp((state.distance % WORLD.lapLength) / WORLD.lapLength, 0, 1);
-    state.level = state.currentLap;
-    car.yaw = lerp(car.yaw, curveYaw + car.steer * (drift ? 0.38 : 0.21), 1 - Math.pow(0.0045, dt));
-    const bankFeel = clamp((roadTangentYaw(car.z + 18) - roadTangentYaw(car.z - 18)) * 1.2, -0.16, 0.16);
-    car.roll = lerp(car.roll, bankFeel - car.steer * (drift ? 0.11 : 0.045), 1 - Math.pow(0.012, dt));
+    car.y = roadHeight(car.z) + 1.02;
 
-    const laneOffset = car.x - roadC;
-    const limit = roadWidthAt(car.z) * 0.5 - 1.45;
+    const center = roadCenter(car.z);
+    const limit = roadWidthAt(car.z) * 0.5 - 1.85;
+    const laneOffset = car.x - center;
     if (Math.abs(laneOffset) > limit) {
       const side = Math.sign(laneOffset);
-      car.x = roadC + side * limit;
-      // V6.7：取消撞牆減速，只保留邊界推回，避免玩家被卡在護欄外。
-      car.lateral *= -0.035;
+      car.x = center + side * limit;
+      car.lateral *= -0.08;
+      state.shake = 0.12;
+      spawnSparks(car.x, car.y, car.z, 4);
     }
 
-    updateAICars(dt);
-    updateRank();
-    updateGates();
-    updateParticles(dt, drift);
+    const roadYaw = roadTangentYaw(car.z + 12);
+    car.yaw = lerp(car.yaw, roadYaw + car.steer * (drifting ? 0.35 : 0.18), 1 - Math.pow(0.005, dt));
+    const bank = clamp((roadTangentYaw(car.z + 18) - roadTangentYaw(car.z - 18)) * 1.3, -0.16, 0.16);
+    car.roll = lerp(car.roll, bank - car.steer * (drifting ? 0.11 : 0.04), 1 - Math.pow(0.012, dt));
 
-    state.crashedCooldown = Math.max(0, state.crashedCooldown - dt);
-    state.shake = 0;
-    if (state.distance >= totalRaceDistance) finishRace();
+    if (drifting) spawnDriftParticles(car.x, car.y, car.z, car.yaw, 1);
+
+    state.distance = Math.max(0, car.z - 6);
+    const totalRace = WORLD.lapLength * state.lapCount;
+    state.currentLap = clamp(Math.floor(state.distance / WORLD.lapLength) + 1, 1, state.lapCount);
+    state.lapProgress = clamp(mod(state.distance, WORLD.lapLength) / WORLD.lapLength, 0, 1);
+    if (state.distance >= totalRace) finishRace();
   }
 
-  function finishRace() {
-    if (state.raceFinished) return;
-    state.raceFinished = true;
-    state.running = false;
-    state.countingDown = false;
-    if (UI.countdown) { UI.countdown.hidden = true; UI.countdown.classList.remove('go'); }
-    state.speed = 0;
-    const previousBest = loadBestForLaps();
-    const isBest = !previousBest || state.raceTime < previousBest;
-    if (isBest) {
-      state.best = state.raceTime;
-      localStorage.setItem(bestKey(), String(state.raceTime));
-    }
-    UI.notice.classList.remove('hidden');
-    UI.startBtn.textContent = '再跑一次';
-    UI.noticeText.textContent = `完成 ${state.lapCount} 圈！成績 ${formatTime(state.raceTime)}，名次第 ${state.rank}/${state.carTotal}${isBest ? '，刷新最佳成績！' : `，最佳 ${formatTime(previousBest)}。`} 可調整圈數、車色或比賽車數再跑。`;
-    chord(isBest ? [620, 820, 1040] : [520, 660, 820], 0.18, 0.050);
-    setTimeout(() => chord(isBest ? [760, 980, 1240] : [440, 620, 760], 0.16, 0.038), 140);
-  }
+  function updateAICars(dt) {
+    const totalRace = WORLD.lapLength * state.lapCount;
+    for (const ai of state.aiCars) {
+      if (ai.finished) continue;
+      if (!state.running) {
+        ai.speed *= Math.pow(0.88, dt * 60);
+        continue;
+      }
 
-  function updateTraffic(dt) {
-    const car = state.car;
-    for (const t of state.traffic) {
-      t.z += t.speed * dt * 0.24;
-      if (t.z < car.z - 26) respawnTraffic(t, car.z + 220 + seededNoise(t.z) * 160);
-      if (t.z > car.z + 340) respawnTraffic(t, car.z + 80 + seededNoise(t.z + 7) * 200);
-      const tx = roadLaneX(t.z, t.lane + Math.sin(t.z * 0.03 + t.wiggle) * 0.2);
-      const dz = t.z - car.z;
-      const dx = tx - car.x;
-      if (Math.abs(dz) < 3.4 && Math.abs(dx) < 2.6 && state.crashedCooldown <= 0) {
-        state.health -= 16;
-        state.speed *= 0.62;
-        state.car.lateral -= Math.sign(dx || 1) * 5.5;
-        state.shake = 0.38;
-        state.crashedCooldown = 0.45;
-        spawnCrashParticles(car.x, car.z + 1.6, 7);
-        if (navigator.vibrate) navigator.vibrate(18);
-        beep(105, 0.08, 'sine', 0.045);
+      const curve = curveStrength(ai.z + 18);
+      const width = roadWidthAt(ai.z + 55);
+      const narrowPenalty = width < 28 ? 13 : width < 31 ? 7 : 0;
+      const playerGap = state.car.z - ai.z;
+      const attack = playerGap > -18 && playerGap < 85 ? 8 * ai.aggression : 0;
+      const base = 116 * ai.skill;
+      const target = clamp(base - curve * 35 - narrowPenalty + attack + Math.sin(state.raceTime * 1.2 + ai.phase) * 2.2, 62, 151);
+      ai.speed = lerp(ai.speed, target, 1 - Math.pow(0.007, dt));
+      ai.z += ai.speed * dt * 0.78;
+      ai.distance = Math.max(0, ai.z - 6);
+
+      const future = ai.z + 58;
+      const curveDir = Math.sign(roadCenter(future) - roadCenter(ai.z + 8)) || 1;
+      let desiredLane = -curveDir * (4.2 + ai.aggression * 1.8);
+      if (playerGap > -10 && playerGap < 60) {
+        const playerLane = state.car.x - roadCenter(state.car.z);
+        desiredLane += (Math.abs(playerLane) > 2 ? -Math.sign(playerLane) : (ai.id % 2 ? 1 : -1)) * 4.8;
+      }
+      desiredLane += Math.sin(ai.z * 0.018 + ai.phase) * 0.45;
+      desiredLane = clamp(desiredLane, -roadWidthAt(ai.z) * 0.37, roadWidthAt(ai.z) * 0.37);
+      const desiredX = roadCenter(ai.z) + desiredLane;
+      ai.x = lerp(ai.x, desiredX, 1 - Math.pow(0.004, dt));
+      ai.y = roadHeight(ai.z) + 1.02;
+      ai.yaw = lerp(ai.yaw, roadTangentYaw(ai.z + 10) + (desiredX - ai.x) * 0.028, 1 - Math.pow(0.008, dt));
+
+      if (ai.distance >= totalRace) {
+        ai.finished = true;
+        ai.finishTime = state.raceTime;
+        ai.distance = totalRace;
       }
     }
   }
 
-  function respawnTraffic(t, z) {
-    const lanes = [-5.8, 0, 5.8];
-    t.z = z;
-    t.lane = lanes[Math.floor(seededNoise(z + 8) * lanes.length)];
-    t.speed = 18 + seededNoise(z + 12) * 25;
-    t.color = trafficColor(Math.floor(z));
+  function updateRank() {
+    const playerDistance = state.raceFinished ? WORLD.lapLength * state.lapCount : state.distance;
+    let ahead = 0;
+    for (const ai of state.aiCars) {
+      const distance = ai.finished ? WORLD.lapLength * state.lapCount : ai.distance;
+      if (distance > playerDistance + 0.3) ahead++;
+    }
+    state.rank = clamp(1 + ahead, 1, state.carTotal);
   }
 
   function updateGates() {
-    const car = state.car;
-    for (const g of state.gates) {
-      if (g.z < car.z - 40) { g.z += WORLD.lapLength * state.lapCount; g.taken = false; }
-      const dz = g.z - car.z;
-      if (!g.taken && Math.abs(dz) < 3.0 && Math.abs(car.x - roadCenter(g.z)) < roadWidthAt(g.z) * 0.42) {
-        g.taken = true;
-        state.boost = clamp(state.boost + 35, 0, 100);
-        spawnBoostParticles(car.x, car.z + 1, 14);
-        chord([520, 750, 980], 0.11, 0.038);
+    for (const gate of state.gates) {
+      if (gate.taken) continue;
+      const dz = gate.z - state.car.z;
+      if (Math.abs(dz) < 3.2 && Math.abs(state.car.x - roadCenter(gate.z)) < roadWidthAt(gate.z) * 0.38) {
+        gate.taken = true;
+        state.boost = clamp(state.boost + 32, 0, 100);
+        spawnGateParticles(state.car.x, state.car.y + 1, state.car.z, 16);
+        chord([540, 760, 980], 0.1, 0.035);
       }
     }
   }
 
-  function spawnCrashParticles(x, z, count) {
+  function spawnParticle(particle) {
+    state.particles.push(particle);
+    if (state.particles.length > 130) state.particles.splice(0, state.particles.length - 130);
+  }
+
+  function spawnDriftParticles(x, y, z, yaw, count) {
+    const sx = Math.sin(yaw), cz = Math.cos(yaw);
     for (let i = 0; i < count; i++) {
-      state.particles.push({ x, y: 0.9 + seededNoise(i + z) * 0.8, z, vx: (seededNoise(i) - .5) * 4.5, vy: seededNoise(i + 2) * 2.4, vz: (seededNoise(i + 4) - .5) * 4.5, life: 0.32 + seededNoise(i + 5) * 0.22, color: palette.smoke, size: 0.12 + seededNoise(i + 9) * 0.16 });
+      const side = i % 2 ? 1 : -1;
+      spawnParticle({
+        x: x + side * 1.2 * cz - sx * 1.8,
+        y: y - 0.55,
+        z: z - 1.8 * cz - side * 1.2 * sx,
+        vx: (seededNoise(z + i) - 0.5) * 1.5,
+        vy: 0.35 + seededNoise(i + z) * 0.6,
+        vz: -1.5 - seededNoise(i + 8) * 1.8,
+        life: 0.55,
+        size: 0.42 + seededNoise(i + 12) * 0.24,
+        color: COLORS.smoke,
+        glow: 0,
+        alpha: 0.52
+      });
     }
   }
 
-  function spawnBoostParticles(x, z, count) {
+  function spawnNitroParticles(x, y, z, yaw, count) {
+    const sx = Math.sin(yaw), cz = Math.cos(yaw);
     for (let i = 0; i < count; i++) {
-      state.particles.push({ x: x + (seededNoise(i) - .5) * 5, y: 0.5 + seededNoise(i + 2) * 2.2, z: z + (seededNoise(i + 4) - .5) * 4, vx: (seededNoise(i + 6) - .5) * 5, vy: seededNoise(i + 8) * 3, vz: -2 - seededNoise(i + 10) * 4, life: 0.7 + seededNoise(i + 12) * 0.45, color: palette.boost, size: 0.16 + seededNoise(i + 14) * 0.25 });
+      const side = i % 2 ? 1 : -1;
+      spawnParticle({
+        x: x + side * 0.64 * cz - sx * 2.65,
+        y: y - 0.12,
+        z: z - 2.65 * cz - side * 0.64 * sx,
+        vx: -sx * (4 + seededNoise(i + z) * 3),
+        vy: (seededNoise(i + 3) - 0.5) * 0.5,
+        vz: -cz * (4 + seededNoise(i + 9) * 3),
+        life: 0.28 + seededNoise(i + 4) * 0.18,
+        size: 0.20 + seededNoise(i + 5) * 0.16,
+        color: i % 2 ? COLORS.cyan : COLORS.purpleSoft,
+        glow: 0.8,
+        alpha: 0.9
+      });
     }
   }
 
-  function updateParticles(dt, drift) {
-    if (drift && state.running) {
-      const car = state.car;
-      const sx = Math.sin(car.yaw), cz = Math.cos(car.yaw);
-      for (let i = 0; i < 1; i++) {
-        const side = i ? 1 : -1;
-        state.particles.push({
-          x: car.x + side * 0.95 * cz - sx * 1.8,
-          y: 0.25,
-          z: car.z - 1.7 * cz - side * 0.95 * sx,
-          vx: side * 0.2, vy: 0.7, vz: -2.0,
-          life: 0.55, color: palette.smoke, size: 0.25 + Math.random() * 0.15
-        });
-      }
+  function spawnSparks(x, y, z, count) {
+    for (let i = 0; i < count; i++) {
+      spawnParticle({
+        x, y: y - 0.25, z,
+        vx: (seededNoise(i + z) - 0.5) * 5,
+        vy: 1 + seededNoise(i + 2) * 2,
+        vz: -1 - seededNoise(i + 4) * 4,
+        life: 0.25 + seededNoise(i + 8) * 0.2,
+        size: 0.08 + seededNoise(i + 6) * 0.08,
+        color: COLORS.orange,
+        glow: 0.8,
+        alpha: 1
+      });
     }
+  }
+
+  function spawnGateParticles(x, y, z, count) {
+    for (let i = 0; i < count; i++) {
+      const angle = seededNoise(i + z) * Math.PI * 2;
+      spawnParticle({
+        x: x + Math.cos(angle) * seededNoise(i + 2) * 4,
+        y: y + seededNoise(i + 3) * 2.5,
+        z: z + Math.sin(angle) * seededNoise(i + 4) * 3,
+        vx: Math.cos(angle) * 2.5,
+        vy: 1.2 + seededNoise(i + 6) * 2.4,
+        vz: Math.sin(angle) * 2.5,
+        life: 0.55 + seededNoise(i + 7) * 0.35,
+        size: 0.12 + seededNoise(i + 8) * 0.18,
+        color: i % 2 ? COLORS.gold : COLORS.purpleSoft,
+        glow: 0.7,
+        alpha: 0.95
+      });
+    }
+  }
+
+  function updateParticles(dt) {
     for (let i = state.particles.length - 1; i >= 0; i--) {
       const p = state.particles[i];
       p.life -= dt;
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.z += p.vz * dt;
-      p.vy -= 4 * dt;
-      if (p.life <= 0 || p.y < 0) state.particles.splice(i, 1);
+      p.vy -= 2.4 * dt;
+      if (p.life <= 0) state.particles.splice(i, 1);
     }
-    if (state.particles.length > 90) state.particles.splice(0, state.particles.length - 90);
+  }
+
+  function update(dt) {
+    updateCountdown(dt);
+    if (state.goFlash > 0) {
+      state.goFlash -= dt;
+      if (state.goFlash <= 0 && UI.countdown) UI.countdown.hidden = true;
+    }
+    updatePlayer(dt);
+    updateAICars(dt);
+    if (state.running) {
+      updateRank();
+      updateGates();
+    }
+    updateParticles(dt);
+    state.shake *= Math.pow(0.02, dt);
+    updateAudio(dt);
+    updateUI();
+  }
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.7);
+    const width = Math.max(1, Math.floor(canvas.clientWidth * dpr));
+    const height = Math.max(1, Math.floor(canvas.clientHeight * dpr));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+      gl.viewport(0, 0, width, height);
+    }
+    perspective(proj, Math.PI / 3.15, width / height, 0.12, 720);
+    gl.uniformMatrix4fv(loc.uProj, false, proj);
+  }
+
+  function setCamera() {
+    const car = state.car;
+    const aheadZ = car.z + (state.camera === 0 ? 31 : 23);
+    const aheadX = roadCenter(aheadZ);
+    const h = roadHeight(car.z);
+    const aheadH = roadHeight(aheadZ);
+    const shakeX = (seededNoise(state.raceTime * 100) - 0.5) * state.shake;
+    const shakeY = (seededNoise(state.raceTime * 100 + 4) - 0.5) * state.shake;
+    let eye;
+    let target;
+
+    if (state.camera === 0) {
+      eye = [car.x + shakeX, h + 7.9 + state.speed * 0.006 + shakeY, car.z - 19.5];
+      target = [lerp(aheadX, car.x, 0.72), aheadH + 1.55, aheadZ];
+    } else {
+      eye = [car.x + shakeX, h + 5.55 + state.speed * 0.004 + shakeY, car.z - 12.3];
+      target = [lerp(aheadX, car.x, 0.88), aheadH + 1.25, aheadZ];
+    }
+
+    lookAt(view, eye, target, [0, 1, 0]);
+    gl.uniformMatrix4fv(loc.uView, false, view);
+  }
+
+  function drawBackdrop() {
+    const zBase = state.car.z + 165;
+    const center = roadCenter(state.car.z + 130);
+
+    drawBox(center, -6.5, state.car.z + 120, 260, 1.2, 520, 0, COLORS.void, 0, 1);
+
+    for (let i = -7; i <= 7; i++) {
+      const noise = seededNoise(i + Math.floor(state.car.z / 180));
+      const x = center + i * 20 + (noise - 0.5) * 8;
+      const height = 8 + noise * 22;
+      const z = zBase + seededNoise(i + 30) * 90;
+      drawBox(x, -2 + height * 0.5, z, 10 + noise * 7, height, 10 + noise * 6, 0, COLORS.building);
+      for (let w = 0; w < 3; w++) {
+        if (seededNoise(i * 7 + w) > 0.34) {
+          drawBox(x + (w - 1) * 2.4, height * 0.22, z - 5.2, 1.3, 1.2, 0.15, 0, w % 2 ? COLORS.window : COLORS.gold, 0.38);
+        }
+      }
+    }
+
+    drawBox(center - 64, 39, zBase + 70, 8, 8, 8, 0, [0.82, 0.64, 1.0], 0.45);
+    drawBox(center - 64, 39, zBase + 70, 13, 1.1, 13, 0, COLORS.purpleSoft, 0.7, 0.22);
+  }
+
+  function drawFinishLine(cx, y, z, yaw, width) {
+    const squares = 14;
+    const squareWidth = width / squares;
+    for (let i = 0; i < squares; i++) {
+      const lx = -width * 0.5 + squareWidth * (i + 0.5);
+      const a = i % 2 ? COLORS.white : COLORS.black;
+      const b = i % 2 ? COLORS.black : COLORS.white;
+      drawLocalBox(cx, y, z, lx, 0.18, -1.2, squareWidth * 0.93, 0.09, 1.1, yaw, a);
+      drawLocalBox(cx, y, z, lx, 0.18, 1.2, squareWidth * 0.93, 0.09, 1.1, yaw, b);
+    }
+    drawLocalBox(cx, y, z, -width * 0.52, 3.0, 0, 0.55, 6.0, 0.55, yaw, COLORS.railTop);
+    drawLocalBox(cx, y, z, width * 0.52, 3.0, 0, 0.55, 6.0, 0.55, yaw, COLORS.railTop);
+    drawLocalBox(cx, y, z, 0, 5.7, 0, width * 1.05, 0.58, 0.72, yaw, COLORS.black);
+    for (let i = -4; i <= 4; i++) {
+      drawLocalBox(cx, y, z, i * 2.25, 5.72, -0.39, 1.55, 0.25, 0.08, yaw, i % 2 ? COLORS.white : COLORS.red, 0.35);
+    }
+  }
+
+  function drawTrackArrow(cx, y, z, yaw, dir, width) {
+    const x = dir * width * 0.20;
+    drawLocalBox(cx, y, z, x, 0.20, 0.1, 0.34, 0.08, 2.5, yaw, COLORS.gold, 0.45, 1, dir * 0.55);
+    drawLocalBox(cx, y, z, x, 0.20, 0.1, 0.34, 0.08, 2.5, yaw, COLORS.gold, 0.45, 1, -dir * 0.55);
+  }
+
+  function drawTrack() {
+    const seg = WORLD.segment;
+    const start = Math.floor((state.car.z - WORLD.drawBehind) / seg) * seg;
+    const end = state.car.z + WORLD.drawAhead;
+
+    for (let z = start; z < end; z += seg) {
+      const mid = z + seg * 0.5;
+      const cx = roadCenter(mid);
+      const y = roadHeight(mid);
+      const yaw = roadTangentYaw(mid);
+      const width = roadWidthAt(mid);
+      const stripe = Math.floor(mid / seg) % 2 === 0;
+      const t = trackT(mid);
+
+      drawBox(cx, y - 0.72, mid, width + 5.8, 0.72, seg * 1.12, yaw, stripe ? COLORS.deck : COLORS.deckDark);
+      drawBox(cx, y - 0.08, mid, width, 0.20, seg * 1.12, yaw, stripe ? COLORS.asphalt : COLORS.asphaltAlt);
+
+      if (Math.floor(mid / 14) % 2 === 0) {
+        drawLocalBox(cx, y, mid, -width / 6, 0.12, 0, 0.21, 0.06, seg * 0.48, yaw, COLORS.lane);
+        drawLocalBox(cx, y, mid, width / 6, 0.12, 0, 0.21, 0.06, seg * 0.48, yaw, COLORS.lane);
+      }
+
+      drawLocalBox(cx, y, mid, -width * 0.5 + 0.30, 0.13, 0, 0.30, 0.07, seg * 1.06, yaw, COLORS.white);
+      drawLocalBox(cx, y, mid, width * 0.5 - 0.30, 0.13, 0, 0.30, 0.07, seg * 1.06, yaw, COLORS.white);
+
+      const curbA = Math.floor(mid / 7) % 2 ? COLORS.red : COLORS.white;
+      const curbB = Math.floor(mid / 7) % 2 ? COLORS.white : COLORS.red;
+      drawLocalBox(cx, y, mid, -width * 0.5 - 0.46, 0.18, 0, 0.68, 0.16, seg * 1.02, yaw, curbA, curbA === COLORS.red ? 0.22 : 0);
+      drawLocalBox(cx, y, mid, width * 0.5 + 0.46, 0.18, 0, 0.68, 0.16, seg * 1.02, yaw, curbB, curbB === COLORS.red ? 0.22 : 0);
+
+      drawLocalBox(cx, y, mid, -width * 0.5 - 1.35, 1.05, 0, 0.34, 1.55, seg * 1.05, yaw, COLORS.rail);
+      drawLocalBox(cx, y, mid, width * 0.5 + 1.35, 1.05, 0, 0.34, 1.55, seg * 1.05, yaw, COLORS.rail);
+      drawLocalBox(cx, y, mid, -width * 0.5 - 1.15, 1.36, 0, 0.18, 0.22, seg * 1.05, yaw, COLORS.purpleSoft, 0.75);
+      drawLocalBox(cx, y, mid, width * 0.5 + 1.15, 1.36, 0, 0.18, 0.22, seg * 1.05, yaw, COLORS.red, 0.58);
+
+      if (Math.floor(mid / 35) % 2 === 0 && y > 7.3) {
+        const pillarY = (y - 7.5) * 0.5 - 1.5;
+        const pillarH = Math.max(4, y + 3);
+        drawLocalBox(cx, -2.8, mid, -width * 0.34, pillarY, 0, 1.0, pillarH, 1.0, yaw, COLORS.deckDark);
+        drawLocalBox(cx, -2.8, mid, width * 0.34, pillarY, 0, 1.0, pillarH, 1.0, yaw, COLORS.deckDark);
+      }
+
+      const lapLine = Math.round(mid / WORLD.lapLength) * WORLD.lapLength;
+      if (Math.abs(mid - lapLine) < seg * 0.55) drawFinishLine(cx, y, mid, yaw, width);
+
+      if ((t > 90 && t < 230) || (t > 760 && t < 980) || (t > 1980 && t < 2160) || (t > 2470 && t < 2640)) {
+        drawTrackArrow(cx, y, mid, yaw, 1, width);
+      } else if ((t > 420 && t < 620) || (t > 1510 && t < 1770) || (t > 2240 && t < 2430) || (t > 2710 && t < 2920)) {
+        drawTrackArrow(cx, y, mid, yaw, -1, width);
+      }
+    }
+  }
+
+  function drawLamp(x, y, z, side, yaw, scale = 1) {
+    drawBox(x, y + 2.8 * scale, z, 0.28 * scale, 5.6 * scale, 0.28 * scale, yaw, COLORS.railTop);
+    drawBox(x + side * 0.9 * scale, y + 5.45 * scale, z, 1.9 * scale, 0.22 * scale, 0.24 * scale, yaw, COLORS.railTop);
+    drawBox(x + side * 1.75 * scale, y + 5.28 * scale, z, 0.48 * scale, 0.32 * scale, 0.5 * scale, yaw, COLORS.purpleSoft, 0.85);
+  }
+
+  function drawCone(x, y, z, yaw, scale = 1) {
+    drawBox(x, y + 0.08 * scale, z, 0.75 * scale, 0.16 * scale, 0.75 * scale, yaw, COLORS.white);
+    drawBox(x, y + 0.42 * scale, z, 0.44 * scale, 0.68 * scale, 0.44 * scale, yaw, COLORS.orange);
+    drawBox(x, y + 0.52 * scale, z, 0.50 * scale, 0.14 * scale, 0.50 * scale, yaw, COLORS.white);
+  }
+
+  function drawTree(x, y, z, scale = 1) {
+    drawBox(x, y + 0.75 * scale, z, 0.55 * scale, 1.5 * scale, 0.55 * scale, 0, COLORS.trunk);
+    drawBox(x, y + 2.1 * scale, z, 2.2 * scale, 1.9 * scale, 2.2 * scale, 0.35, COLORS.tree, 0, 1, 0, 0.15);
+    drawBox(x, y + 3.25 * scale, z, 1.55 * scale, 1.5 * scale, 1.55 * scale, -0.25, [0.075, 0.090, 0.120], 0, 1, 0, -0.10);
+  }
+
+  function drawBillboard(x, y, z, side, yaw, scale = 1) {
+    drawBox(x, y + 2.0 * scale, z, 0.38 * scale, 4.0 * scale, 0.38 * scale, yaw, COLORS.rail);
+    drawBox(x, y + 4.3 * scale, z, 5.5 * scale, 2.5 * scale, 0.34 * scale, yaw, COLORS.deckDark);
+    drawBox(x + side * 0.05, y + 4.3 * scale, z - 0.20, 4.7 * scale, 1.8 * scale, 0.10 * scale, yaw, side > 0 ? COLORS.purple : COLORS.orange, 0.45);
+    drawLocalBox(x, y + 4.3 * scale, z - 0.25, -1.25 * scale, 0, 0, 0.35 * scale, 0.95 * scale, 0.08, yaw, COLORS.gold, 0.45, 1, 0.65);
+    drawLocalBox(x, y + 4.3 * scale, z - 0.25, 0, 0, 0.35 * scale, 0.95 * scale, 0.08, yaw, COLORS.gold, 0.45, 1, 0.65);
+    drawLocalBox(x, y + 4.3 * scale, z - 0.25, 1.25 * scale, 0, 0, 0.35 * scale, 0.95 * scale, 0.08, yaw, COLORS.gold, 0.45, 1, 0.65);
+  }
+
+  function drawPitArea(cx, y, z, side, yaw) {
+    const x = cx + side * (roadWidthAt(z) * 0.5 + 15);
+    drawBox(x, y + 1.15, z, 17, 2.3, 8.5, yaw, COLORS.building);
+    drawBox(x, y + 2.7, z - 0.6, 18, 0.55, 9.2, yaw, COLORS.purple, 0.18);
+    for (let i = -3; i <= 3; i++) {
+      drawLocalBox(x, y, z, i * 2.25, 1.0, -4.38, 1.6, 1.3, 0.18, yaw, i % 2 ? COLORS.red : COLORS.window, 0.4);
+      drawLocalBox(x, y, z, i * 2.25, 0.55, 3.6, 1.2, 1.1, 1.2, yaw, COLORS.black);
+    }
+  }
+
+  function drawProps() {
+    const carZ = state.car.z;
+    const start = Math.floor((carZ - 40) / 28) * 28;
+    const end = carZ + WORLD.propRange;
+
+    for (let z = start; z < end; z += 28) {
+      const index = Math.floor(z / 28);
+      const noise = seededNoise(index);
+      const side = noise > 0.5 ? 1 : -1;
+      const width = roadWidthAt(z);
+      const cx = roadCenter(z);
+      const y = roadHeight(z);
+      const yaw = roadTangentYaw(z);
+      const offset = width * 0.5 + 5.5 + seededNoise(index + 20) * 8;
+      const x = cx + side * offset;
+
+      if (index % 2 === 0) drawLamp(x, y, z, -side, yaw, 0.85 + seededNoise(index + 3) * 0.18);
+      if (index % 7 === 2) drawBillboard(cx + side * (width * 0.5 + 12), y, z, side, yaw, 0.85 + seededNoise(index + 9) * 0.2);
+      else if (index % 5 === 1) drawTree(x + side * 5, y - 0.2, z + 2, 0.75 + seededNoise(index + 5) * 0.55);
+      else if (index % 9 === 4) {
+        for (let c = 0; c < 3; c++) drawCone(cx + side * (width * 0.5 - 2.6 - c * 1.15), y + 0.08, z + c * 2.1, yaw, 0.72);
+      }
+
+      const t = trackT(z);
+      if (Math.abs(t - 335) < 16 || Math.abs(t - 1840) < 16) drawPitArea(cx, y, z, side, yaw);
+    }
+  }
+
+  function drawGate(gate) {
+    const z = gate.z;
+    if (z < state.car.z - 50 || z > state.car.z + WORLD.drawAhead) return;
+    const cx = roadCenter(z);
+    const y = roadHeight(z);
+    const yaw = roadTangentYaw(z);
+    const width = roadWidthAt(z);
+    const active = !gate.taken;
+    const color = active ? COLORS.gold : COLORS.rail;
+    drawLocalBox(cx, y, z, -width * 0.42, 2.0, 0, 0.42, 4.0, 0.42, yaw, color, active ? 0.65 : 0.05);
+    drawLocalBox(cx, y, z, width * 0.42, 2.0, 0, 0.42, 4.0, 0.42, yaw, color, active ? 0.65 : 0.05);
+    drawLocalBox(cx, y, z, 0, 3.95, 0, width * 0.84, 0.42, 0.42, yaw, color, active ? 0.65 : 0.05);
+    if (active) {
+      for (let i = -3; i <= 3; i++) {
+        drawLocalBox(cx, y, z, i * width * 0.10, 3.92, -0.25, width * 0.055, 0.16, 0.10, yaw, i % 2 ? COLORS.purpleSoft : COLORS.gold, 0.9);
+      }
+    }
+  }
+
+  function drawWheel(cx, cy, cz, lx, lz, yaw, steer = 0) {
+    drawLocalBox(cx, cy, cz, lx, -0.50, lz, 0.58, 0.82, 1.10, yaw, COLORS.black, 0, 1, steer);
+    drawLocalBox(cx, cy, cz, lx, -0.50, lz, 0.62, 0.36, 0.55, yaw, COLORS.railTop, 0.05, 1, steer);
+  }
+
+  function drawToyCar(car, skin, player = false) {
+    const x = car.x;
+    const y = car.y;
+    const z = car.z;
+    const yaw = car.yaw;
+    const steer = player ? car.steer * 0.24 : 0;
+
+    drawLocalBox(x, y, z, 0, 0.00, 0.00, 3.5, 0.92, 5.2, yaw, skin.body);
+    drawLocalBox(x, y, z, 0, 0.55, 0.78, 3.15, 0.65, 2.55, yaw, skin.body);
+    drawLocalBox(x, y, z, 0, 1.22, -0.20, 2.65, 1.15, 2.40, yaw, skin.body);
+    drawLocalBox(x, y, z, 0, 1.27, -0.38, 2.30, 0.82, 1.65, yaw, COLORS.glass);
+    drawLocalBox(x, y, z, 0, 1.42, 0.65, 2.15, 0.62, 0.65, yaw, COLORS.glass);
+
+    drawLocalBox(x, y, z, 0, 0.64, 1.55, 0.38, 0.08, 2.15, yaw, skin.stripe, 0.18);
+    drawLocalBox(x, y, z, 0, 1.82, -0.20, 0.35, 0.10, 2.35, yaw, skin.stripe, 0.18);
+    drawLocalBox(x, y, z, 0, 0.18, -2.55, 3.65, 0.42, 0.38, yaw, COLORS.black);
+    drawLocalBox(x, y, z, 0, 0.22, 2.58, 3.52, 0.38, 0.34, yaw, skin.accent, 0.15);
+
+    drawLocalBox(x, y, z, -1.12, 0.35, -2.63, 0.58, 0.43, 0.15, yaw, COLORS.red, 0.75);
+    drawLocalBox(x, y, z, 1.12, 0.35, -2.63, 0.58, 0.43, 0.15, yaw, COLORS.red, 0.75);
+    drawLocalBox(x, y, z, -1.10, 0.44, 2.64, 0.62, 0.34, 0.12, yaw, COLORS.gold, 0.45);
+    drawLocalBox(x, y, z, 1.10, 0.44, 2.64, 0.62, 0.34, 0.12, yaw, COLORS.gold, 0.45);
+
+    drawWheel(x, y, z, -1.62, -1.58, yaw, steer);
+    drawWheel(x, y, z, 1.62, -1.58, yaw, steer);
+    drawWheel(x, y, z, -1.62, 1.62, yaw, steer);
+    drawWheel(x, y, z, 1.62, 1.62, yaw, steer);
+
+    if (player && input.nitro && input.gas && state.boost > 0) {
+      drawLocalBox(x, y, z, -0.62, -0.03, -2.95, 0.30, 0.30, 1.25, yaw, COLORS.cyan, 1.0, 0.9);
+      drawLocalBox(x, y, z, 0.62, -0.03, -2.95, 0.30, 0.30, 1.25, yaw, COLORS.purpleSoft, 1.0, 0.9);
+    }
+
+    if (player) {
+      drawLocalBox(x, y, z, 0, 2.25, -0.25, 2.9, 0.12, 2.8, yaw, skin.accent, 0.55, 0.22);
+    }
+  }
+
+  function drawAICars() {
+    for (const ai of state.aiCars) {
+      if (ai.z < state.car.z - 35 || ai.z > state.car.z + WORLD.drawAhead) continue;
+      drawToyCar(ai, CAR_SKINS[ai.skinIndex], false);
+    }
+  }
+
+  function drawParticles() {
+    gl.depthMask(false);
+    for (const p of state.particles) {
+      const lifeAlpha = clamp(p.life * 2.3, 0, 1) * p.alpha;
+      drawBox(p.x, p.y, p.z, p.size, p.size, p.size * 1.7, 0, p.color, p.glow, lifeAlpha);
+    }
+    gl.depthMask(true);
   }
 
   function render() {
     resize();
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     setCamera();
-    drawSkyDecor();
+    drawBackdrop();
     drawTrack();
     drawProps();
-    drawGates();
+    for (const gate of state.gates) drawGate(gate);
     drawAICars();
+    drawToyCar(state.car, CAR_SKINS[state.selectedCar], true);
     drawParticles();
-    drawCar(state.car.x, state.car.y, state.car.z, state.car.yaw, CAR_SKINS[state.selectedCar], true);
+  }
+
+  function updateUI() {
+    const kmh = Math.round(state.speed * 2.54);
+    if (UI.speedText) UI.speedText.textContent = String(kmh);
+    if (UI.rankText) UI.rankText.textContent = `${state.rank}/${state.carTotal}`;
+    if (UI.lapText) UI.lapText.textContent = `${state.currentLap}/${state.lapCount}`;
+    if (UI.progressText) UI.progressText.textContent = `${Math.round(state.lapProgress * 100)}%`;
+    if (UI.timeText) UI.timeText.textContent = formatTime(state.raceTime);
+    if (UI.bestText) UI.bestText.textContent = state.best ? formatTime(state.best) : '--';
+    if (UI.boostBar) UI.boostBar.style.width = `${state.boost}%`;
+    if (UI.fpsText) UI.fpsText.textContent = `${state.fps} FPS`;
   }
 
   function cameraLabel() {
@@ -947,298 +1062,212 @@
   }
 
   function updateCameraButton() {
-    UI.cameraBtn.textContent = `視角：${cameraLabel()}`;
+    if (UI.cameraBtn) UI.cameraBtn.textContent = `視角：${cameraLabel()}`;
   }
 
-  function setCamera() {
-    const car = state.car;
-    const aheadZ = car.z + 30;
-    const aheadCenter = roadCenter(aheadZ);
-    const h = roadHeight(car.z);
-    const aheadH = roadHeight(aheadZ);
-    let eye;
-    let target;
+  let audioCtx = null;
+  let masterGain = null;
+  let engineOsc = null;
+  let engineGain = null;
 
-    if (state.camera === 0) {
-      // 追尾：距離稍遠，可看清連續彎與路線箭頭，車子仍在正中。
-      eye = [car.x, h + 7.7 + state.speed * 0.006, car.z - 19.0];
-      target = [lerp(aheadCenter, car.x, 0.76), aheadH + 1.42, aheadZ];
-    } else {
-      // 近距：更貼近玩家車，速度感比較強。
-      eye = [car.x, h + 5.35 + state.speed * 0.004, car.z - 11.6];
-      target = [lerp(aheadCenter, car.x, 0.90), aheadH + 1.10, car.z + 21];
-    }
-
-    lookAt(view, eye, target, [0, 1, 0]);
-    gl.uniformMatrix4fv(loc.uView, false, view);
-  }
-
-  function drawSkyDecor() {
-    const zBase = state.car.z + 155;
-    const cx = roadCenter(state.car.z + 130);
-    drawBox(cx - 38, 38, zBase, 7, 7, 7, 0, [1.0, 0.82, 0.25]);
-    for (let i = 0; i < 11; i++) {
-      const z = state.car.z + 45 + i * 22;
-      const x = cx + (seededNoise(i + Math.floor(state.car.z / 90)) - 0.5) * 85;
-      const y = 24 + seededNoise(i + 80) * 12;
-      drawBox(x, y, z, 8, 1.4, 2.3, 0, [0.82, 0.92, 0.98]);
-      drawBox(x + 5, y + 0.2, z + 1.8, 5, 1.2, 2.0, 0, [0.74, 0.87, 0.96]);
-    }
-  }
-
-  function drawTrack() {
-    const carZ = state.car.z;
-    const seg = WORLD.segment;
-    const start = Math.floor((carZ - WORLD.drawBehind) / seg) * seg;
-    const end = carZ + WORLD.drawAhead;
-
-    for (let z = start; z < end; z += seg) {
-      const mid = z + seg * 0.5;
-      const c = roadCenter(mid);
-      const yaw = roadTangentYaw(mid);
-      const h = roadHeight(mid);
-      const rw = roadWidthAt(mid);
-      const band = Math.floor(mid / seg) % 2 === 0;
-      const t = trackT(mid);
-      const isBridge = (t > 1550 && t < 2005) || (t > 3160 && t < 3420);
-
-      drawBox(c, h - 0.34, mid, 118, 0.25, seg * 1.08, yaw, band ? palette.grass : palette.grass2);
-      if (isBridge) {
-        drawBox(c, h - 0.05, mid, rw + 4.6, 0.34, seg * 1.08, yaw, [0.36, 0.38, 0.40]);
+  function ensureAudio() {
+    try {
+      audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      if (!masterGain) {
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.26;
+        masterGain.connect(audioCtx.destination);
       }
-      drawBox(c, h + 0.02, mid, rw, 0.16, seg * 1.08, yaw, band ? palette.asphalt : palette.asphalt2);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 
-      const lapLine = Math.round(mid / WORLD.lapLength) * WORLD.lapLength;
-      if (Math.abs(mid - lapLine) < seg * 0.55) drawFinishLine(c, mid, yaw, rw);
+  function tone(freq = 220, duration = 0.06, type = 'sine', gain = 0.04, delay = 0) {
+    if (!state.sound || !ensureAudio()) return;
+    const t = audioCtx.currentTime + delay;
+    const osc = audioCtx.createOscillator();
+    const amp = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    amp.gain.setValueAtTime(0.0001, t);
+    amp.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), t + 0.012);
+    amp.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+    osc.connect(amp).connect(masterGain);
+    osc.start(t);
+    osc.stop(t + duration + 0.03);
+  }
 
-      // 分隔線：從原本簡單雙線，變成更像賽道的三段導引線。
-      if (Math.floor(mid / seg) % 2 === 0) {
-        drawLocalBox(c, h + 0.14, mid, -rw / 6, 0, 0.22, 0.045, seg * 0.52, yaw, palette.line);
-        drawLocalBox(c, h + 0.14, mid, rw / 6, 0, 0.22, 0.045, seg * 0.52, yaw, palette.line);
-        if (t > 560 && t < 950) drawLocalBox(c, h + 0.145, mid, 0, 0, 0.18, 0.045, seg * 0.38, yaw, [0.95,0.95,0.82]);
+  function beep(freq, duration, type, gain) {
+    tone(freq, duration, type, gain);
+  }
+
+  function chord(freqs, duration = 0.12, gain = 0.035) {
+    freqs.forEach((freq, i) => tone(freq, duration + i * 0.015, i ? 'triangle' : 'square', gain * (i ? 0.65 : 1), i * 0.018));
+  }
+
+  function updateAudio() {
+    if (!state.sound || !ensureAudio()) return;
+    if (!engineOsc) {
+      engineOsc = audioCtx.createOscillator();
+      engineGain = audioCtx.createGain();
+      engineOsc.type = 'sawtooth';
+      engineGain.gain.value = 0.0001;
+      engineOsc.connect(engineGain).connect(masterGain);
+      engineOsc.start();
+    }
+    const now = audioCtx.currentTime;
+    const moving = state.running || state.countingDown;
+    const speed01 = clamp(state.speed / 145, 0, 1);
+    engineOsc.frequency.setTargetAtTime(55 + speed01 * 145 + (input.gas ? 16 : 0), now, 0.055);
+    engineGain.gain.setTargetAtTime(moving ? 0.015 + speed01 * 0.032 : 0.0001, now, 0.07);
+  }
+
+  function stopAudio() {
+    try { engineOsc?.stop(); } catch (_) {}
+    engineOsc = null;
+    engineGain = null;
+  }
+
+  function bindHold(button, key) {
+    if (!button) return;
+    const down = (event) => {
+      event.preventDefault();
+      input[key] = true;
+      button.classList.add('is-down');
+      button.setPointerCapture?.(event.pointerId);
+      ensureAudio();
+    };
+    const up = (event) => {
+      event?.preventDefault?.();
+      input[key] = false;
+      button.classList.remove('is-down');
+    };
+    button.addEventListener('pointerdown', down, { passive: false });
+    button.addEventListener('pointerup', up, { passive: false });
+    button.addEventListener('pointercancel', up, { passive: false });
+    button.addEventListener('pointerleave', (event) => {
+      if (button.classList.contains('is-down')) up(event);
+    }, { passive: false });
+  }
+
+  function bindInput() {
+    bindHold(UI.gasBtn, 'gas');
+    bindHold(UI.brakeBtn, 'brake');
+    bindHold(UI.nitroBtn, 'nitro');
+    bindHold(UI.driftBtn, 'drift');
+
+    UI.startBtn?.addEventListener('click', startCountdown);
+    UI.resetBtn?.addEventListener('click', resetGame);
+    UI.cameraBtn?.addEventListener('click', () => {
+      state.camera = (state.camera + 1) % 2;
+      updateCameraButton();
+      beep(360, 0.04, 'triangle', 0.025);
+    });
+    UI.soundBtn?.addEventListener('click', () => {
+      state.sound = !state.sound;
+      UI.soundBtn.textContent = `音效：${state.sound ? '開' : '關'}`;
+      if (state.sound) chord([440, 660], 0.08, 0.03);
+      else stopAudio();
+    });
+
+    UI.carChoices.forEach((button) => {
+      const index = Number(button.dataset.car);
+      button.classList.toggle('active', index === state.selectedCar);
+      button.addEventListener('click', () => {
+        state.selectedCar = index;
+        localStorage.setItem('neon-toy-car', String(index));
+        UI.carChoices.forEach((item) => item.classList.toggle('active', item === button));
+        beep(300 + index * 60, 0.05, 'triangle', 0.03);
+      });
+    });
+
+    UI.lapChoices.forEach((button) => {
+      const laps = Number(button.dataset.laps);
+      button.classList.toggle('active', laps === state.lapCount);
+      button.addEventListener('click', () => {
+        state.lapCount = laps;
+        localStorage.setItem('neon-toy-laps', String(laps));
+        UI.lapChoices.forEach((item) => item.classList.toggle('active', item === button));
+        resetGame();
+      });
+    });
+
+    UI.raceChoices.forEach((button) => {
+      const cars = Number(button.dataset.cars);
+      button.classList.toggle('active', cars === state.carTotal);
+      button.addEventListener('click', () => {
+        state.carTotal = clamp(cars, 1, 6);
+        localStorage.setItem('neon-toy-cars', String(state.carTotal));
+        UI.raceChoices.forEach((item) => item.classList.toggle('active', item === button));
+        resetGame();
+      });
+    });
+
+    window.addEventListener('keydown', (event) => {
+      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD','KeyN','ShiftLeft','ShiftRight'].includes(event.code)) event.preventDefault();
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') input.gas = true;
+      if (event.code === 'ArrowDown' || event.code === 'KeyS') input.brake = true;
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') input.left = true;
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') input.right = true;
+      if (event.code === 'KeyN' || event.code === 'ShiftLeft' || event.code === 'ShiftRight') input.nitro = true;
+      if (event.code === 'Space') input.drift = true;
+      if (event.code === 'KeyR') resetGame();
+      if (event.code === 'KeyC') UI.cameraBtn?.click();
+      ensureAudio();
+    }, { passive: false });
+
+    window.addEventListener('keyup', (event) => {
+      if (event.code === 'ArrowUp' || event.code === 'KeyW') input.gas = false;
+      if (event.code === 'ArrowDown' || event.code === 'KeyS') input.brake = false;
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') input.left = false;
+      if (event.code === 'ArrowRight' || event.code === 'KeyD') input.right = false;
+      if (event.code === 'KeyN' || event.code === 'ShiftLeft' || event.code === 'ShiftRight') input.nitro = false;
+      if (event.code === 'Space') input.drift = false;
+    });
+
+    canvas.addEventListener('pointerdown', (event) => {
+      input.pointerActive = true;
+      input.pointerStartX = event.clientX;
+      canvas.setPointerCapture?.(event.pointerId);
+    });
+    canvas.addEventListener('pointermove', (event) => {
+      if (!input.pointerActive) return;
+      const delta = event.clientX - input.pointerStartX;
+      input.touchSteer = clamp(delta / Math.max(120, canvas.clientWidth * 0.26), -1, 1);
+    });
+    const endPointer = () => {
+      input.pointerActive = false;
+      input.touchSteer = 0;
+    };
+    canvas.addEventListener('pointerup', endPointer);
+    canvas.addEventListener('pointercancel', endPointer);
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', () => {
+      updateOrientationClass();
+      setTimeout(resize, 120);
+      setTimeout(resize, 420);
+    });
+    window.visualViewport?.addEventListener('resize', resize);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        input.gas = input.brake = input.nitro = input.drift = false;
+        state.running = false;
+        UI.notice?.classList.remove('hidden');
       }
-
-      // 彎道前的路面箭頭。
-      if ((t > 105 && t < 210) || (t > 735 && t < 910) || (t > 2070 && t < 2240) || (t > 2550 && t < 2715) || (t > 3110 && t < 3225) || (t > 3420 && t < 3560)) {
-        drawTrackArrow(c, h, mid, yaw, 1, rw);
-      } else if ((t > 405 && t < 560) || (t > 1660 && t < 1850) || (t > 2290 && t < 2470) || (t > 2790 && t < 2980) || (t > 3255 && t < 3405) || (t > 3540 && t < 3820)) {
-        drawTrackArrow(c, h, mid, yaw, -1, rw);
-      }
-
-      // 道路邊線、紅白路肩、護欄
-      drawLocalBox(c, h + 0.16, mid, -rw * 0.5 + 0.3, 0, 0.25, 0.05, seg * 1.02, yaw, palette.white);
-      drawLocalBox(c, h + 0.16, mid, rw * 0.5 - 0.3, 0, 0.25, 0.05, seg * 1.02, yaw, palette.white);
-      const curbColorA = Math.floor(mid / 8) % 2 === 0 ? palette.red : palette.white;
-      const curbColorB = Math.floor(mid / 8) % 2 === 0 ? palette.white : palette.red;
-      drawLocalBox(c, h + 0.18, mid, -rw * 0.5 - 0.45, 0, 0.58, 0.08, seg * 0.45, yaw, curbColorA);
-      drawLocalBox(c, h + 0.18, mid, rw * 0.5 + 0.45, 0, 0.58, 0.08, seg * 0.45, yaw, curbColorB);
-
-      const railHeight = isBridge ? 1.05 : 0.72;
-      drawLocalBox(c, h + railHeight, mid, -rw * 0.5 - 1.25, 0, 0.28, isBridge ? 1.18 : 0.75, seg * 0.98, yaw, palette.rail);
-      drawLocalBox(c, h + railHeight, mid, rw * 0.5 + 1.25, 0, 0.28, isBridge ? 1.18 : 0.75, seg * 0.98, yaw, palette.rail);
-      if (Math.floor(mid / 16) % 3 === 0) {
-        drawLocalBox(c, h + 1.35, mid, -rw * 0.5 - 1.25, 0, 0.42, 0.22, seg * 0.55, yaw, palette.railDark);
-        drawLocalBox(c, h + 1.35, mid, rw * 0.5 + 1.25, 0, 0.42, 0.22, seg * 0.55, yaw, palette.railDark);
-      }
-    }
+    });
   }
 
-  function drawTrackArrow(c, h, z, yaw, dir, rw) {
-    const x = dir * rw * 0.18;
-    drawLocalBox(c, h + 0.21, z, x, 0.2, 0.28, 0.055, 2.35, yaw, [0.96,0.88,0.28], dir * 0.52);
-    drawLocalBox(c, h + 0.21, z, x, 0.2, 0.28, 0.055, 2.35, yaw, [0.96,0.88,0.28], -dir * 0.52);
-  }
-
-  function drawFinishLine(c, z, yaw, rw = roadWidthAt(z)) {
-    const h = roadHeight(z);
-    const squares = 14;
-    const squareW = rw / squares;
-    for (let i = 0; i < squares; i++) {
-      const localX = -rw * 0.5 + squareW * (i + 0.5);
-      const colorA = i % 2 === 0 ? palette.white : [0.03, 0.035, 0.04];
-      const colorB = i % 2 === 0 ? [0.03, 0.035, 0.04] : palette.white;
-      drawLocalBox(c, h + 0.22, z, localX, -1.15, squareW * 0.92, 0.08, 1.1, yaw, colorA);
-      drawLocalBox(c, h + 0.22, z, localX, 1.15, squareW * 0.92, 0.08, 1.1, yaw, colorB);
-    }
-    drawLocalBox(c, h + 3.0, z, -rw * 0.48, 0, 0.42, 5.2, 0.42, yaw, palette.white);
-    drawLocalBox(c, h + 3.0, z, rw * 0.48, 0, 0.42, 5.2, 0.42, yaw, palette.white);
-    drawBox(c, h + 5.35, z, rw * 0.96, 0.38, 0.42, yaw, [0.03, 0.035, 0.04]);
-    drawBox(c, h + 5.86, z, rw * 0.70, 0.34, 0.34, yaw, [0.90, 0.12, 0.10]);
-  }
-
-  function drawProps() {
-    const carZ = state.car.z;
-    for (const p of state.props) {
-      const total = WORLD.lapLength * state.lapCount;
-      while (p.z < carZ - 60) p.z += total;
-      while (p.z > carZ + WORLD.propRange) p.z -= total;
-      if (p.z < carZ - 55 || p.z > carZ + WORLD.propRange) continue;
-      const baseX = roadCenter(p.z) + p.side * p.offset;
-      if (p.type === 'tree') drawTree(baseX, p.z, p.scale);
-      else if (p.type === 'house') drawHouse(baseX, p.z, p.scale, p.side);
-      else if (p.type === 'grandstand') drawGrandstand(baseX, p.z, p.scale, p.side);
-      else if (p.type === 'banner') drawBanner(baseX, p.z, p.scale, p.side);
-      else if (p.type === 'chevron') drawChevron(baseX, p.z, p.scale, p.side);
-      else drawRock(baseX, p.z, p.scale);
-    }
-  }
-
-  function drawTree(x, z, s) {
-    const y = roadHeight(z);
-    drawBox(x, y + 0.9 * s, z, 0.7 * s, 1.8 * s, 0.7 * s, 0, palette.trunk);
-    drawBox(x, y + 2.4 * s, z, 2.2 * s, 1.5 * s, 2.2 * s, 0.25, palette.leaves);
-    drawBox(x + 0.3 * s, y + 3.15 * s, z - 0.2 * s, 1.5 * s, 1.2 * s, 1.5 * s, -0.15, [0.08, 0.36, 0.13]);
-  }
-
-  function drawHouse(x, z, s, side) {
-    const y = roadHeight(z);
-    drawBox(x, y + 0.9 * s, z, 3.2 * s, 1.8 * s, 2.7 * s, 0.12 * side, palette.house);
-    drawBox(x, y + 2.05 * s, z, 3.7 * s, 0.75 * s, 3.1 * s, 0.12 * side, palette.roof);
-    drawBox(x + side * 0.9 * s, y + 1.05 * s, z - 1.37 * s, 0.65 * s, 0.75 * s, 0.08 * s, 0.12 * side, [0.08, 0.15, 0.23]);
-    drawBox(x - side * 1.0 * s, y + 0.78 * s, z + 1.38 * s, 0.42 * s, 0.95 * s, 0.08 * s, 0.12 * side, [0.28, 0.16, 0.08]);
-  }
-
-  function drawRock(x, z, s) {
-    const y = roadHeight(z);
-    drawBox(x, y + 0.35 * s, z, 1.6 * s, 0.7 * s, 1.2 * s, 0.4, [0.36, 0.37, 0.34]);
-    drawBox(x + 0.55 * s, y + 0.55 * s, z - 0.2 * s, 0.9 * s, 0.7 * s, 0.8 * s, -0.2, [0.26, 0.27, 0.25]);
-  }
-
-  function drawChevron(x, z, s, side) {
-    const y = roadHeight(z);
-    const yaw = roadTangentYaw(z);
-    const face = yaw + side * 0.2;
-    drawBox(x, y + 1.0 * s, z, 0.26 * s, 2.0 * s, 0.26 * s, face, [0.10,0.10,0.11]);
-    drawBox(x, y + 2.25 * s, z, 2.5 * s, 1.0 * s, 0.24 * s, face, [0.95,0.80,0.10]);
-    drawBox(x + side * 0.42 * s, y + 2.25 * s, z + 0.05 * s, 0.42 * s, 0.78 * s, 0.30 * s, face + side * 0.55, [0.05,0.06,0.07]);
-    drawBox(x - side * 0.32 * s, y + 2.25 * s, z + 0.05 * s, 0.42 * s, 0.78 * s, 0.30 * s, face - side * 0.55, [0.05,0.06,0.07]);
-  }
-
-  function drawGrandstand(x, z, s, side) {
-    const y = roadHeight(z);
-    const yaw = roadTangentYaw(z) + side * 0.02;
-    drawBox(x, y + 0.55 * s, z, 6.2 * s, 1.1 * s, 2.4 * s, yaw, [0.28,0.30,0.33]);
-    drawBox(x, y + 1.45 * s, z - 0.25 * s, 5.7 * s, 0.55 * s, 2.1 * s, yaw, [0.42,0.44,0.48]);
-    drawBox(x, y + 2.0 * s, z - 0.5 * s, 5.2 * s, 0.4 * s, 1.8 * s, yaw, [0.55,0.56,0.58]);
-    drawBox(x, y + 2.75 * s, z - 0.65 * s, 6.8 * s, 0.28 * s, 2.6 * s, yaw, [0.95,0.10,0.12]);
-  }
-
-  function drawBanner(x, z, s, side) {
-    const y = roadHeight(z);
-    const yaw = roadTangentYaw(z);
-    drawBox(x, y + 1.8 * s, z, 0.20 * s, 3.6 * s, 0.20 * s, yaw, palette.railDark);
-    drawBox(x + side * 2.4 * s, y + 1.8 * s, z, 0.20 * s, 3.6 * s, 0.20 * s, yaw, palette.railDark);
-    drawBox(x + side * 1.2 * s, y + 3.15 * s, z, 2.8 * s, 0.70 * s, 0.20 * s, yaw, [0.10,0.55,0.85]);
-    drawBox(x + side * 1.2 * s, y + 3.15 * s, z + 0.04, 2.1 * s, 0.22 * s, 0.22 * s, yaw, [0.95,0.95,0.90]);
-  }
-
-  function drawGates() {
-    for (const g of state.gates) {
-      if (g.z < state.car.z - 30 || g.z > state.car.z + WORLD.drawAhead) continue;
-      const c = roadCenter(g.z);
-      const yaw = roadTangentYaw(g.z);
-      const h = roadHeight(g.z);
-      const rw = roadWidthAt(g.z);
-      const col = g.taken ? [0.12, 0.34, 0.42] : palette.cyan;
-      drawLocalBox(c, h + 2.2, g.z, -rw * 0.34, 0, 0.38, 4.4, 0.38, yaw, col);
-      drawLocalBox(c, h + 2.2, g.z, rw * 0.34, 0, 0.38, 4.4, 0.38, yaw, col);
-      drawBox(c, h + 4.25, g.z, rw * 0.68, 0.38, 0.38, yaw, col);
-      drawBox(c, h + 0.35, g.z, rw * 0.52, 0.08, 0.24, yaw, g.taken ? [0.06,0.18,0.22] : [0.2,0.95,1.0]);
-    }
-  }
-
-  function drawAICars() {
-    for (const ai of state.aiCars) {
-      if (ai.z < state.car.z - 42 || ai.z > state.car.z + WORLD.drawAhead) continue;
-      drawCar(ai.x, roadHeight(ai.z) + 0.82, ai.z, ai.yaw, CAR_SKINS[ai.skinIndex], false);
-      // 電腦車上方的小色塊標記，讓 6 車混戰時更容易辨識。
-      drawBox(ai.x, roadHeight(ai.z) + 3.35, ai.z, 1.25, 0.16, 0.36, ai.yaw, CAR_SKINS[ai.skinIndex].stripe);
-    }
-  }
-
-  function drawTraffic() {
-    for (const t of state.traffic) {
-      if (t.z < state.car.z - 25 || t.z > state.car.z + WORLD.drawAhead) continue;
-      const x = roadLaneX(t.z, t.lane + Math.sin(t.z * 0.03 + t.wiggle) * 0.2);
-      drawCar(x, 0.72, t.z, roadTangentYaw(t.z), { body: t.color, stripe: [0.88,0.9,0.92], glass: [0.04,0.08,0.12] }, false);
-    }
-  }
-
-  function drawParticles() {
-    for (const p of state.particles) {
-      if (p.z < state.car.z - 30 || p.z > state.car.z + WORLD.drawAhead) continue;
-      drawBox(p.x, p.y, p.z, p.size, p.size, p.size, 0, p.color);
-    }
-  }
-
-  function rotated(parent, ox, oy, oz) {
-    const s = Math.sin(parent.yaw), c = Math.cos(parent.yaw);
-    return [parent.x + ox * c + oz * s, parent.y + oy, parent.z - ox * s + oz * c];
-  }
-
-  function carPart(parent, ox, oy, oz, w, h, d, color, yawOffset = 0) {
-    const p = rotated(parent, ox, oy, oz);
-    drawBox(p[0], p[1], p[2], w, h, d, parent.yaw + yawOffset, color);
-  }
-
-  function drawCar(x, y, z, yaw, skin, isPlayer) {
-    const p = { x, y, z, yaw };
-    const body = skin.body;
-    const stripe = skin.stripe;
-    const glass = skin.glass;
-    const tire = [0.015, 0.017, 0.02];
-    const rim = isPlayer ? [0.88, 0.90, 0.88] : [0.65, 0.68, 0.70];
-
-    // 陰影
-    carPart(p, 0, -0.68, 0, 3.35, 0.08, 5.15, [0.035,0.045,0.05]);
-    // 車身：小模型車比例
-    carPart(p, 0, -0.18, 0, 2.85, 0.75, 4.55, body);
-    carPart(p, 0, 0.38, -0.22, 2.25, 0.78, 2.25, body);
-    carPart(p, 0, 0.88, -0.42, 1.75, 0.72, 1.42, glass);
-    carPart(p, 0, 0.72, 0.55, 1.7, 0.38, 1.0, glass);
-    // 引擎蓋、尾翼與貼紙線條
-    carPart(p, 0, 0.24, 1.38, 2.35, 0.12, 1.35, body);
-    carPart(p, 0, 0.34, -2.05, 2.45, 0.18, 0.28, stripe);
-    carPart(p, -1.08, 0.05, 0.05, 0.11, 0.16, 3.55, stripe);
-    carPart(p, 1.08, 0.05, 0.05, 0.11, 0.16, 3.55, stripe);
-    // 車燈
-    carPart(p, -0.72, 0.02, 2.31, 0.42, 0.22, 0.08, [1.0, 0.95, 0.62]);
-    carPart(p, 0.72, 0.02, 2.31, 0.42, 0.22, 0.08, [1.0, 0.95, 0.62]);
-    carPart(p, -0.78, 0.02, -2.32, 0.38, 0.20, 0.08, [1.0, 0.12, 0.08]);
-    carPart(p, 0.78, 0.02, -2.32, 0.38, 0.20, 0.08, [1.0, 0.12, 0.08]);
-    // 輪胎與輪框
-    const wheelZ = 1.45;
-    for (const sx of [-1, 1]) {
-      for (const sz of [-wheelZ, wheelZ]) {
-        carPart(p, sx * 1.46, -0.55, sz, 0.46, 0.82, 0.72, tire);
-        carPart(p, sx * 1.49, -0.55, sz, 0.08, 0.48, 0.42, rim);
-      }
-    }
-    if (isPlayer && state.boost > 8) {
-      carPart(p, -0.5, -0.08, -2.72, 0.34, 0.34, 0.9, palette.boost);
-      carPart(p, 0.5, -0.08, -2.72, 0.34, 0.34, 0.9, palette.boost);
-    }
-  }
-
-  function updateUI() {
-    UI.speedText.textContent = Math.round(Math.min(320, state.speed * 2.25));
-    if (UI.rankText) UI.rankText.textContent = `${state.rank}/${state.carTotal}`;
-    UI.lapText.textContent = `${state.currentLap}/${state.lapCount}`;
-    const raceProgress = clamp(state.distance / (WORLD.lapLength * state.lapCount), 0, 1);
-    UI.progressText.textContent = `${Math.floor(raceProgress * 100)}%`;
-    UI.timeText.textContent = formatTime(state.raceTime);
-    UI.bestText.textContent = state.best ? formatTime(state.best) : '--';
-    if (UI.healthBar) UI.healthBar.style.width = `${clamp(state.health, 0, 100)}%`;
-    UI.boostBar.style.width = `${clamp(state.boost, 0, 100)}%`;
-  }
-
-  function frame(now) {
-    const dt = Math.min(0.04, (now - (state.lastTime || now)) / 1000);
+  function frame(time) {
+    const now = time * 0.001;
+    const dt = clamp(now - (state.lastTime || now), 0, 0.033);
     state.lastTime = now;
+
     update(dt);
-    updateAudio(dt);
     render();
-    updateUI();
 
     state.fpsAccum += dt;
     state.fpsCount++;
@@ -1246,122 +1275,8 @@
       state.fps = Math.round(state.fpsCount / state.fpsAccum);
       state.fpsAccum = 0;
       state.fpsCount = 0;
-      UI.fpsText.textContent = `${state.fps} FPS · 3D · ${cameraLabel()}`;
     }
     requestAnimationFrame(frame);
-  }
-
-  function bindHoldButton(btn, prop) {
-    const down = (e) => { e.preventDefault(); input[prop] = true; btn.classList.add('is-down'); ensureAudio(); };
-    const up = (e) => { if (e) e.preventDefault(); input[prop] = false; btn.classList.remove('is-down'); };
-    btn.addEventListener('pointerdown', down);
-    btn.addEventListener('pointerup', up);
-    btn.addEventListener('pointercancel', up);
-    btn.addEventListener('pointerleave', up);
-  }
-
-  function bindInput() {
-    bindHoldButton(UI.gasBtn, 'gas');
-    bindHoldButton(UI.brakeBtn, 'brake');
-
-    UI.startBtn.addEventListener('click', () => {
-      if (state.raceFinished || state.health <= 0) resetGame();
-      UI.noticeText.textContent = `V7.1：橫式實戰 HUD 已壓縮，Safari 工具列出現時也較穩；${state.lapCount} 圈、共 ${state.carTotal} 台車。6 車模式有兩台強敵 AI。`;
-      setRunning(!(state.running || state.countingDown));
-    });
-    UI.resetBtn.addEventListener('click', resetGame);
-    UI.soundBtn.addEventListener('click', () => {
-      state.sound = !state.sound;
-      UI.soundBtn.textContent = `音效：${state.sound ? '開' : '關'}`;
-      if (state.sound) { ensureAudio(); chord([440, 660], 0.08, 0.030); }
-      else stopEngineLoop();
-    });
-    UI.cameraBtn.addEventListener('click', () => {
-      state.camera = (state.camera + 1) % 2;
-      updateCameraButton();
-      if (state.sound) beep(360, 0.035, 'triangle', 0.025);
-    });
-    UI.carChoices.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        state.selectedCar = Number(btn.dataset.car);
-        UI.carChoices.forEach((b) => b.classList.toggle('active', b === btn));
-        beep(300 + state.selectedCar * 80, 0.04, 'triangle', 0.035);
-      });
-    });
-
-    UI.lapChoices.forEach((btn) => {
-      const laps = Number(btn.dataset.laps);
-      btn.classList.toggle('active', laps === state.lapCount);
-      btn.addEventListener('click', () => {
-        state.lapCount = laps;
-        localStorage.setItem('racing-v7.1-laps', String(laps));
-        UI.lapChoices.forEach((b) => b.classList.toggle('active', b === btn));
-        resetGame();
-        UI.noticeText.textContent = `已設定 ${laps} 圈比賽。現在共 ${state.carTotal} 台車，按「啟動」開始。`;
-        beep(430 + laps * 45, 0.045, 'triangle', 0.035);
-      });
-    });
-
-    UI.raceChoices.forEach((btn) => {
-      const cars = Number(btn.dataset.cars);
-      btn.classList.toggle('active', cars === state.carTotal);
-      btn.addEventListener('click', () => {
-        state.carTotal = clamp(cars, 1, 6);
-        localStorage.setItem('racing-v7.1-cars', String(state.carTotal));
-        UI.raceChoices.forEach((b) => b.classList.toggle('active', b === btn));
-        resetGame();
-        UI.noticeText.textContent = state.carTotal === 1
-          ? `已切換單人練習。沒有電腦車，專心練路線。`
-          : `已切換 ${state.carTotal} 台車比賽。6 車模式會有兩台強敵 AI；取消撞牆減速，過彎可以更專心。`;
-        beep(380 + state.carTotal * 35, 0.045, 'triangle', 0.035);
-      });
-    });
-
-    window.addEventListener('keydown', (e) => {
-      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Space','KeyW','KeyA','KeyS','KeyD'].includes(e.code)) e.preventDefault();
-      if (e.code === 'ArrowUp' || e.code === 'KeyW') input.gas = true;
-      if (e.code === 'ArrowDown' || e.code === 'KeyS') input.brake = true;
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') input.left = true;
-      if (e.code === 'ArrowRight' || e.code === 'KeyD') input.right = true;
-      if (e.code === 'Space') { if (state.raceFinished) resetGame(); setRunning(!(state.running || state.countingDown)); }
-      if (e.code === 'KeyR') resetGame();
-      if (e.code === 'KeyC') UI.cameraBtn.click();
-    }, { passive: false });
-    window.addEventListener('keyup', (e) => {
-      if (e.code === 'ArrowUp' || e.code === 'KeyW') input.gas = false;
-      if (e.code === 'ArrowDown' || e.code === 'KeyS') input.brake = false;
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') input.left = false;
-      if (e.code === 'ArrowRight' || e.code === 'KeyD') input.right = false;
-    });
-
-    canvas.addEventListener('pointerdown', (e) => {
-      input.pointerActive = true;
-      input.pointerStartX = e.clientX;
-      input.pointerLastX = e.clientX;
-      canvas.setPointerCapture?.(e.pointerId);
-    });
-    canvas.addEventListener('pointermove', (e) => {
-      if (!input.pointerActive) return;
-      const dx = e.clientX - input.pointerStartX;
-      input.pointerLastX = e.clientX;
-      input.touchSteer = clamp(dx / Math.max(130, canvas.clientWidth * 0.28), -1, 1);
-      input.touchDrift = Math.abs(input.touchSteer) > 0.90;
-      if (input.touchDrift) input.touchDriftHold = 0.10;
-    });
-    const endPointer = () => {
-      input.pointerActive = false;
-      input.touchSteer = 0;
-      input.touchDrift = false;
-    };
-    canvas.addEventListener('pointerup', endPointer);
-    canvas.addEventListener('pointercancel', endPointer);
-
-    window.addEventListener('resize', resize);
-    window.addEventListener('orientationchange', () => { updateOrientationClass(); setTimeout(resize, 120); setTimeout(resize, 420); });
-    if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) setRunning(false);
-    });
   }
 
   updateOrientationClass();
