@@ -1,0 +1,36 @@
+/* NEON TOY CIRCUIT V8.6 — sunny world, collision, ghost and championship */
+#v86SkyLayer{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden;opacity:.46;mix-blend-mode:screen;transition:opacity .28s ease,filter .28s ease;background:linear-gradient(180deg,rgba(107,195,255,.32),rgba(192,229,255,.10) 44%,rgba(255,238,185,.08) 75%,transparent)}
+.v86-menu-open #v86SkyLayer{opacity:.72}
+.v85-weather-rain #v86SkyLayer{opacity:.10;filter:saturate(.45) brightness(.65)}
+.v85-weather-night #v86SkyLayer{opacity:.04;filter:brightness(.4)}
+#v86SkyLayer .v86-sun{position:absolute;right:13%;top:9%;width:92px;height:92px;border-radius:50%;background:radial-gradient(circle,#fffbd2 0 21%,#ffe68c 37%,rgba(255,202,91,.42) 61%,transparent 72%);filter:blur(.2px);box-shadow:0 0 60px rgba(255,223,130,.38)}
+#v86SkyLayer .v86-cloud{position:absolute;width:170px;height:42px;border-radius:99px;background:rgba(255,255,255,.20);filter:blur(8px);animation:v86Cloud 21s linear infinite}
+#v86SkyLayer .v86-cloud:before,#v86SkyLayer .v86-cloud:after{content:"";position:absolute;border-radius:50%;background:inherit}
+#v86SkyLayer .v86-cloud:before{width:72px;height:72px;left:27px;bottom:1px}
+#v86SkyLayer .v86-cloud:after{width:96px;height:80px;right:20px;bottom:-2px}
+#v86SkyLayer .c1{left:-20%;top:14%;animation-duration:25s}.v86-cloud.c2{left:28%;top:25%;transform:scale(.72);animation-duration:31s;animation-delay:-11s}.v86-cloud.c3{left:70%;top:18%;transform:scale(.54);animation-duration:28s;animation-delay:-17s}
+html:not(.v85-weather-rain):not(.v85-weather-night) #gameCanvas{filter:brightness(1.12) saturate(.92) contrast(.96)}
+.v85-weather-rain #gameCanvas{filter:brightness(.84) saturate(.74) contrast(1.05)}
+.v85-weather-night #gameCanvas{filter:brightness(.70) saturate(1.08) contrast(1.12)}
+
+.v86-collision-flash{position:absolute;inset:0;z-index:14;pointer-events:none;opacity:0;background:radial-gradient(circle at var(--hit-x,50%) 70%,rgba(255,240,188,.48),rgba(255,76,91,.28) 18%,transparent 52%)}
+.v86-collision-flash.show{animation:v86Hit .48s ease-out}
+.v86-collision-badge{position:absolute;z-index:15;left:50%;top:31%;transform:translate(-50%,-10px) scale(.94);padding:10px 15px;border:1px solid rgba(255,104,120,.62);border-radius:13px;background:rgba(46,18,34,.88);color:#ffe2e6;font:950 13px/1 ui-rounded,"SF Pro Rounded",sans-serif;letter-spacing:.08em;opacity:0;pointer-events:none;box-shadow:0 16px 35px rgba(15,5,18,.42),0 0 26px rgba(255,65,91,.28)}
+.v86-collision-badge.show{animation:v86Badge 1.15s ease both}
+
+.v86-ghost-dot{fill:#8cf6ff;stroke:#fff;stroke-width:2;opacity:.82;filter:drop-shadow(0 0 5px #60e8ff)}
+.v86-ghost-status{position:absolute;z-index:12;right:calc(18px + var(--safe-right));top:calc(213px + var(--safe-top));min-width:132px;padding:7px 10px;border:1px solid rgba(124,237,255,.36);border-radius:12px;background:rgba(24,29,47,.78);color:#dffcff;font:850 10px/1.25 ui-rounded,"SF Pro Rounded",sans-serif;letter-spacing:.04em;box-shadow:0 12px 25px rgba(5,9,24,.28);backdrop-filter:blur(10px);opacity:0;transition:opacity .18s ease}
+.v86-ghost-status.visible{opacity:1}.v86-ghost-status b{color:#7ef1ff}.v86-ghost-status.behind b{color:#ffbd74}
+
+.v86-champ-toggle{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin:10px 0 0;padding:9px 12px;border:1px solid rgba(255,210,97,.35);border-radius:13px;background:linear-gradient(135deg,rgba(255,198,80,.16),rgba(121,81,255,.13));color:#fff1bd;font:900 11px/1 ui-rounded,"SF Pro Rounded",sans-serif;letter-spacing:.08em}
+.v86-champ-toggle.active{border-color:rgba(255,218,113,.72);box-shadow:0 0 24px rgba(255,188,67,.20);background:linear-gradient(135deg,rgba(255,194,63,.28),rgba(118,77,255,.20))}
+.v86-champ-panel{position:absolute;z-index:12;left:50%;top:calc(16px + var(--safe-top));transform:translateX(-50%);min-width:255px;padding:9px 12px;border:1px solid rgba(255,220,115,.32);border-radius:14px;background:rgba(29,25,48,.82);color:#fff;box-shadow:0 15px 35px rgba(9,6,25,.34);backdrop-filter:blur(12px);opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease}
+.v86-champ-panel.visible{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+.v86-champ-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.v86-champ-head span{color:#ffe49a;font:950 10px/1 ui-rounded,"SF Pro Rounded",sans-serif;letter-spacing:.13em}.v86-champ-head b{font-size:11px;color:#d9d2ff}.v86-champ-score{display:flex;gap:10px;margin-top:7px}.v86-champ-score strong{font-size:18px;color:#fff0ae}.v86-champ-score small{display:block;color:#aaa1cf;font-size:8px;letter-spacing:.1em}.v86-champ-top{display:flex;gap:6px;margin-top:7px}.v86-champ-top i{flex:1;padding:5px 6px;border-radius:8px;background:rgba(255,255,255,.06);color:#dcd7f4;font:800 9px/1.2 ui-rounded,"SF Pro Rounded",sans-serif;font-style:normal;text-align:center}.v86-champ-reset{margin-left:auto;padding:4px 7px;border:1px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.06);color:#ccc6e9;font:800 8px/1 ui-rounded,"SF Pro Rounded",sans-serif}
+
+@keyframes v86Cloud{from{translate:-25vw 0}to{translate:125vw 0}}
+@keyframes v86Hit{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
+@keyframes v86Badge{0%{opacity:0;transform:translate(-50%,-10px) scale(.94)}14%,68%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-5px) scale(.98)}}
+@media (max-width:1180px) and (max-height:560px){#v86SkyLayer .v86-sun{width:64px;height:64px;right:16%;top:7%}.v86-ghost-status{right:calc(8px + var(--safe-right));top:calc(166px + var(--safe-top));font-size:8px;min-width:102px;padding:5px 7px}.v86-champ-panel{top:calc(7px + var(--safe-top));min-width:205px;padding:6px 8px}.v86-champ-score strong{font-size:14px}.v86-champ-top{display:none}.v86-collision-badge{top:26%;font-size:11px}}
+@media (max-width:820px) and (orientation:portrait){#v86SkyLayer,.v86-ghost-status,.v86-champ-panel,.v86-collision-badge{display:none!important}}
+@media (prefers-reduced-motion:reduce){#v86SkyLayer .v86-cloud,.v86-collision-flash.show,.v86-collision-badge.show{animation:none!important}}
