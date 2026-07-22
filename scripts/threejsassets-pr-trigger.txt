@@ -1,0 +1,2 @@
+Free threejsassets V9.1 integration verification.
+This branch exists only to expose the download, GLB validation and headless WebGL display check as a pull-request workflow run.
