@@ -6,14 +6,14 @@ on:
     branches: [main]
     paths:
       - .github/workflows/import-threejsassets.yml
-      - scripts/import_threejsassets.py
+      - scripts/import_threejsassets_v91.py
       - scripts/check_threejsassets.mjs
       - js/v9.1-threejsassets.js
   pull_request:
     branches: [main]
     paths:
       - .github/workflows/import-threejsassets.yml
-      - scripts/import_threejsassets.py
+      - scripts/import_threejsassets_v91.py
       - scripts/check_threejsassets.mjs
       - js/v9.1-threejsassets.js
       - scripts/threejsassets-pr-trigger.txt
@@ -51,7 +51,7 @@ jobs:
         run: |
           mkdir -p artifacts/threejsassets-v91
           set -o pipefail
-          python scripts/import_threejsassets.py 2>&1 | tee artifacts/threejsassets-v91/import.log
+          python scripts/import_threejsassets_v91.py 2>&1 | tee artifacts/threejsassets-v91/import.log
 
       - name: Validate generated JavaScript
         run: |
