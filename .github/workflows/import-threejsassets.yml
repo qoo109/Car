@@ -47,7 +47,11 @@ jobs:
           node-version: '22'
 
       - name: Download and verify Free GLB assets
-        run: python scripts/import_threejsassets.py
+        shell: bash
+        run: |
+          mkdir -p artifacts/threejsassets-v91
+          set -o pipefail
+          python scripts/import_threejsassets.py 2>&1 | tee artifacts/threejsassets-v91/import.log
 
       - name: Validate generated JavaScript
         run: |
