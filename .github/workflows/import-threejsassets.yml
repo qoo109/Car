@@ -9,12 +9,20 @@ on:
       - scripts/import_threejsassets.py
       - scripts/check_threejsassets.mjs
       - js/v9.1-threejsassets.js
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/import-threejsassets.yml
+      - scripts/import_threejsassets.py
+      - scripts/check_threejsassets.mjs
+      - js/v9.1-threejsassets.js
+      - scripts/threejsassets-pr-trigger.txt
 
 permissions:
   contents: write
 
 concurrency:
-  group: import-threejsassets-free
+  group: import-threejsassets-free-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -74,11 +82,15 @@ jobs:
           name: threejsassets-v91-display-check
           path: |
             artifacts/threejsassets-v91/
+            js/generated/threejsassets-free-v91.js
+            docs/threejsassets-free-assets.md
+            index.html
             /tmp/car-v91-server.log
           if-no-files-found: warn
           retention-days: 14
 
       - name: Commit verified embedded assets
+        if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
