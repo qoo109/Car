@@ -1,0 +1,91 @@
+name: Import verified Free threejsassets models
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/import-threejsassets.yml
+      - scripts/import_threejsassets.py
+      - scripts/check_threejsassets.mjs
+      - js/v9.1-threejsassets.js
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-threejsassets-free
+  cancel-in-progress: false
+
+jobs:
+  import-test-and-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Download and verify Free GLB assets
+        run: python scripts/import_threejsassets.py
+
+      - name: Validate generated JavaScript
+        run: |
+          node --check js/generated/threejsassets-free-v91.js
+          node --check js/v9.1-threejsassets.js
+
+      - name: Install browser test runtime
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start local game server
+        run: |
+          python -m http.server 4173 > /tmp/car-v91-server.log 2>&1 &
+          echo $! > /tmp/car-v91-server.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/car-v91-server.log
+          exit 1
+
+      - name: Execute WebGL display check
+        run: node scripts/check_threejsassets.mjs
+
+      - name: Upload display-check evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: threejsassets-v91-display-check
+          path: |
+            artifacts/threejsassets-v91/
+            /tmp/car-v91-server.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Commit verified embedded assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html js/generated/threejsassets-free-v91.js docs/threejsassets-free-assets.md
+          if git diff --cached --quiet; then
+            echo "No generated changes to commit."
+            exit 0
+          fi
+          git commit -m "feat: import verified Free threejsassets models [skip ci]"
+          git push
