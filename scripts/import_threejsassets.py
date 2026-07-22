@@ -19,6 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 GENERATED_DIR = ROOT / "js" / "generated"
 DOCS_DIR = ROOT / "docs"
+IMPORT_REVISION = "2026-07-22-r2"
 
 LICENSE_URL = "https://threejsassets.com/license"
 LICENSE_NAME = "Free Commercial License"
@@ -197,6 +198,7 @@ def update_index() -> None:
 def main() -> None:
     downloaded_at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
     records: list[dict[str, object]] = []
+    print(f"Importer revision: {IMPORT_REVISION}")
     for asset in ASSETS:
         print(f"Verifying Free label: {asset['name']}")
         verify_free_page(asset)
